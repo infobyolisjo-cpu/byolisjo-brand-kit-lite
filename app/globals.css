@@ -1,16 +1,9 @@
 /* app/globals.css */
 
 /* Reset básico */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-html,
-body {
-  height: 100%;
-}
+html, body { height: 100%; }
 
 /* Fuente base (se asigna desde layout.tsx con variables) */
 body {
@@ -22,26 +15,14 @@ body {
 }
 
 /* Links */
-a {
-  color: inherit;
-  text-decoration: none;
-}
+a { color: inherit; text-decoration: none; }
 
 /* Hover bonito para los enlaces del header */
-.navlink {
-  transition: transform .15s ease, border-color .15s ease, background .2s ease;
-}
-.navlink:hover {
-  transform: translateY(-1px);
-  border-color: #8e7759; /* dorado más oscuro */
-  background: #fffaf2;   /* beige claro */
-}
+.navlink { transition: transform .15s ease, border-color .15s ease, background .2s ease; }
+.navlink:hover { transform: translateY(-1px); border-color: #8e7759; background: #fffaf2; }
 
 /* Formularios */
-input, button {
-  font-family: inherit;
-  font-size: 1rem;
-}
+input, button { font: inherit; font-size: 1rem; }
 button {
   border: 1px solid #e6dfd4;
   border-radius: 10px;
@@ -68,51 +49,20 @@ input, textarea, select {
   padding: 16px;
   box-shadow: 0 10px 30px rgba(0,0,0,.03);
 }
-.badge {
-  font-size: 11px;
-  padding: 3px 8px;
-  border: 1px solid #b08d57;
-  border-radius: 999px;
-}
+.badge { font-size: 11px; padding: 3px 8px; border: 1px solid #b08d57; border-radius: 999px; }
 
 /* Separador */
-hr {
-  border: none;
-  height: 1px;
-  background: #eadfce;
-  margin: 20px 0;
-}
+hr { border: none; height: 1px; background: #eadfce; margin: 20px 0; }
 
 /* Layout responsive para el preview */
-.previewGrid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr;
-  align-items: start;
-}
+.previewGrid { display: grid; gap: 16px; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 900px) { .previewGrid { grid-template-columns: 320px 1fr; } }
 
-@media (min-width: 900px) {
-  .previewGrid {
-    grid-template-columns: 320px 1fr; /* desktop: 2 columnas */
-  }
-}
+.swatchRow { display: flex; gap: 12px; flex-wrap: wrap; }
 
-.swatchRow {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+.previewCard { background: #ffffff; border: 1px solid #e6dfd4; border-radius: 10px; padding: 12px; }
 
-.previewCard {
-  background: #ffffff;
-  border: 1px solid #e6dfd4;
-  border-radius: 10px;
-  padding: 12px;
-}
-
-.previewFull {
-  grid-column: 1 / -1; /* ocupa todo el ancho del grid */
-}
+.previewFull { grid-column: 1 / -1; }
 
 .sloganCard {
   display: grid;
@@ -124,3 +74,4 @@ hr {
   border-radius: 10px;
   cursor: pointer;
 }
+
