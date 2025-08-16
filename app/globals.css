@@ -1,40 +1,126 @@
-/* app/globals.css — SAFE MINIMAL VERSION */
+/* app/globals.css */
 
 /* Reset básico */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-html, body { height: 100%; }
-
-:root {
-  --bg: #f7f2ea;
-  --fg: #1f1b16;
-  --gold: #b08d57;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
+html,
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  height: 100%;
+}
+
+/* Fuente base (se asigna desde layout.tsx con variables) */
+body {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  background: #efe6d8; /* beige base */
+  color: #201810;      /* café oscuro */
 }
 
-a { color: inherit; text-decoration: none; }
+/* Links */
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
-/* Controles básicos */
-input, button, textarea, select { font: inherit; }
+/* Hover bonito para los enlaces del header */
+.navlink {
+  transition: transform .15s ease, border-color .15s ease, background .2s ease;
+}
+.navlink:hover {
+  transform: translateY(-1px);
+  border-color: #8e7759; /* dorado más oscuro */
+  background: #fffaf2;   /* beige claro */
+}
 
+/* Formularios */
+input, button {
+  font-family: inherit;
+  font-size: 1rem;
+}
 button {
-  border: 1px solid var(--gold);
-  background: #fff;
-  color: var(--fg);
+  border: 1px solid #e6dfd4;
+  border-radius: 10px;
+  cursor: pointer;
+  background: linear-gradient(180deg, #f9f4ec, #efe6d9);
   padding: 10px 14px;
+  transition: transform .05s ease;
+}
+button:hover { transform: translateY(-1px); }
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d6c8b3;
+  background: #fffdfa;
+}
+
+/* Tarjetas y badges */
+.card {
+  border: 1px solid #e4d8c6;
+  border-radius: 16px;
+  background: #fffefa;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.03);
+}
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid #b08d57;
+  border-radius: 999px;
+}
+
+/* Separador */
+hr {
+  border: none;
+  height: 1px;
+  background: #eadfce;
+  margin: 20px 0;
+}
+
+/* Layout responsive para el preview */
+.previewGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .previewGrid {
+    grid-template-columns: 320px 1fr; /* desktop: 2 columnas */
+  }
+}
+
+.swatchRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.previewCard {
+  background: #ffffff;
+  border: 1px solid #e6dfd4;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.previewFull {
+  grid-column: 1 / -1; /* ocupa todo el ancho del grid */
+}
+
+.sloganCard {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e6dfd4;
   border-radius: 10px;
   cursor: pointer;
 }
-
-.container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
-
-/* Utilidades simples para tarjetas y filas de colores */
-.card { background: #fff; border: 1px solid #e6dfd4; border-radius: 10px; padding: 12px; }
-.swatchRow { display: flex; gap: 12px; flex-wrap: wrap; }
