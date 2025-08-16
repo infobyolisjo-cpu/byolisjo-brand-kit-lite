@@ -5,6 +5,7 @@ export async function POST(req: Request) {
   try {
     const { name = "", slogan = "", colors = [] } = await req.json();
 
+    // Detecta el dominio actual (Vercel/Local)
     const origin =
       (req.headers.get("x-forwarded-proto") ?? "https") +
       "://" +
