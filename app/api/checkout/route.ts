@@ -1,24 +1,24 @@
 // app/api/checkout/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { name = "", slogan = "", colors = [] } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const name   = (body?.name ?? '') as string;
+    const slogan = (body?.slogan ?? '') as string;
+    const colors = (body?.colors ?? []) as string[];
 
-    // Detecta el dominio actual (Vercel/Local)
-    const origin =
-      (req.headers.get("x-forwarded-proto") ?? "https") +
-      "://" +
-      (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "localhost:3000");
+    const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || vercelUrl || 'http://localhost:3000';
 
     const url =
-      `${origin}/download` +
+      `${baseUrl}/download` +
       `?name=${encodeURIComponent(name)}` +
       `&slogan=${encodeURIComponent(slogan)}` +
-      `&colors=${encodeURIComponent((colors as string[]).join(","))}`;
+      `&colors=${encodeURIComponent((colors || []).join(','))}`;
 
     return NextResponse.json({ url });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "Bad request" }, { status: 400 });
+    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 });
   }
 }
