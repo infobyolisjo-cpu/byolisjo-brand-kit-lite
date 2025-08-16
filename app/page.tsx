@@ -1,270 +1,72 @@
-<<<<<<< HEAD
-'use client';
-
-import { useState } from 'react';
-import Link from 'next/link';
-
-type Result = {
-  colors: string[];
-  slogan: string;
-  name: string;
-};
+"use client";
+import { useState } from "react";
 
 export default function Home() {
-  const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
-  const [aud, setAud] = useState('');
-  const [result, setResult] = useState<Result | null>(null);
+  const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const onGenerate = async () => {
-    setError(null);
-    if (!name || !desc || !aud) {
-      setError('Please fill all fields.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, desc, aud }),
-      });
-      if (!res.ok) throw new Error('Generation failed');
-      const data = await res.json();
-      setResult(data);
-    } catch (e:any) {
-      setError(e.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <main>
-      <div className="card">
-        <h2 className="font-serif text-xl mb-2">Your Brand Identity in Minutes</h2>
-        <p className="opacity-80 mb-4">
-          Get your color palette, slogan, and a clean wordmark logo. Test mode only — connect Stripe later.
-        </p>
-        <div className="grid gap-3">
-          <div>
-            <label className="text-sm opacity-80">Business name</label>
-            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Luna Essence" />
-          </div>
-          <div>
-            <label className="text-sm opacity-80">Short description</label>
-            <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Handcrafted jewelry with moon-inspired stones" />
-          </div>
-          <div>
-            <label className="text-sm opacity-80">Main target audience</label>
-            <input value={aud} onChange={e=>setAud(e.target.value)} placeholder="Women 25–45 who value artisanal design" />
-          </div>
-          <button onClick={onGenerate} disabled={loading}>{loading ? 'Generating…' : 'Generate My Brand Kit'}</button>
-          {error && <div className="badge" style={{borderColor:'#c55', color:'#c55'}}>{error}</div>}
-        </div>
-      </div>
-
-      {result && (
-        <div className="card" style={{marginTop:16}}>
-          <h3 className="font-serif text-lg mb-2">Preview</h3>
-          <div className="mb-3">
-            <div className="flex" style={{gap:8, flexWrap:'wrap'}}>
-              {result.colors.map((c,i)=>(
-                <div key={i} style={{width:72, height:48, borderRadius:12, border:'1px solid #e4d8c6', background:c}} title={c}>
-                  <div style={{fontSize:11, textAlign:'center', marginTop:30, background:'rgba(255,255,255,.7)'}}>{c}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <p className="mb-2"><strong>Slogan:</strong> {result.slogan}</p>
-          <div className="mb-4">
-            <Link
-              href={`/pay?name=${encodeURIComponent(result.name)}&slogan=${encodeURIComponent(result.slogan)}&colors=${encodeURIComponent(result.colors.join(','))}`}
-            >
-              <button>Proceed to Checkout (Test)</button>
-            </Link>
-          </div>
-          <p className="text-xs opacity-70">Test Mode: you can complete checkout with Stripe testing cards.</p>
-        </div>
-=======
-"use client";
-
-import React, { useState } from "react";
-
-type PreviewData = {
-  name: string;
-  colors: string[];
-  slogans: string[];   // ahora es array
-  logoSVG: string;
-};
-
-export default function Page() {
-  const [name, setName] = useState("");
-  const [desc, setDesc] = useState("");
-  const [aud, setAud] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [preview, setPreview] = useState<PreviewData | null>(null);
-  const [chosen, setChosen] = useState<string>(""); // slogan elegido
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleGenerate(e: React.FormEvent) {
+  async function onGenerate(e: React.FormEvent) {
     e.preventDefault();
-    setError(null); setPreview(null); setChosen("");
     setLoading(true);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, desc, aud }),
+        body: JSON.stringify({ prompt }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to generate");
-      const p = data as PreviewData;
-      setPreview(p);
-      setChosen(p.slogans[0] || "");
-    } catch (err: any) {
-      setError(err.message || "Error generating kit");
+      const json = await res.json();
+      console.log("Kit:", json);
+      alert("¡Kit generado! (abre la consola para ver los datos)");
+    } catch {
+      alert("Hubo un problema al generar el kit.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleDownload() {
-    if (!preview) return;
-    setDownloading(true); setError(null);
-    try {
-      const res = await fetch("/api/zip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: preview.name,
-          slogan: chosen || preview.slogans[0] || "",
-          colors: preview.colors,
-        }),
-      });
-      if (!res.ok) throw new Error("Download failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${preview.name.replace(/\s+/g, "_")}_BrandKit.zip`;
-      document.body.appendChild(a);
-      a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.message || "Error downloading");
-    } finally {
-      setDownloading(false);
-    }
-  }
-
   return (
-    <main style={{ maxWidth: 980, margin: "40px auto", padding: "0 16px" }}>
-      <h1 style={{ fontSize: 40, fontWeight: 700, marginBottom: 8 }}>ByOlisJo Brand Kit Lite</h1>
-      <p style={{ color: "#6b6b6b", marginBottom: 24 }}>Premium & minimal — beige & gold aesthetic</p>
-
-      <section style={{ background: "#faf5ef", border: "1px solid #eadfd2", borderRadius: 12, padding: 20, boxShadow: "0 6px 14px rgba(0,0,0,0.04)" }}>
-        <h2 style={{ fontSize: 24, margin: "0 0 12px" }}>Your Brand Identity in Minutes</h2>
-        <p style={{ margin: "0 0 16px", color: "#6b6b6b" }}>
-          View your palette, choose a slogan and wordmark — download only if you like it.
+    <main className="min-h-screen bg-[#efe6d8] text-[#1f1b16]">
+      <header className="mx-auto max-w-5xl px-6 pt-14 text-center">
+        <span className="inline-block rounded-full border px-3 py-1 text-xs tracking-wide">
+          ByOlisJo — Brand Kit Lite
+        </span>
+        <h1 className="mt-5 text-4xl md:text-6xl font-extrabold leading-tight">
+          Identidad <span className="underline decoration-[#c3a572]">premium</span> en 3 minutos
+        </h1>
+        <p className="mt-4 text-lg opacity-80">
+          Describe tu marca y te damos paleta, tipografías, voz y eslogan listos para usar.
         </p>
+      </header>
 
-        <form onSubmit={handleGenerate} style={{ display: "grid", gap: 10 }}>
-          <input placeholder="Business name" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle}/>
-          <input placeholder="Short description" value={desc} onChange={(e) => setDesc(e.target.value)} style={inputStyle}/>
-          <input placeholder="Main target audience" value={aud} onChange={(e) => setAud(e.target.value)} style={inputStyle}/>
-          <button type="submit" disabled={loading || !name || !desc || !aud} style={buttonStyle}>
-            {loading ? "Generating…" : "Generate My Brand Kit"}
-          </button>
+      <section className="mx-auto mt-10 max-w-3xl px-6">
+        <form onSubmit={onGenerate} className="rounded-2xl bg-white/80 shadow p-4 md:p-6 border border-black/10">
+          <label className="block text-sm font-medium mb-2">Describe tu marca</label>
+          <div className="flex gap-2">
+            <input
+              value={prompt}
+              onChange={(e)=>setPrompt(e.target.value)}
+              placeholder='ej: "moderna, femenina, elegante, beige y dorado, joyas artesanales"'
+              className="flex-1 rounded-xl border border-black/10 px-4 py-3 outline-none"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-xl px-5 py-3 bg-[#c3a572] text-white font-semibold disabled:opacity-60"
+            >
+              {loading ? "Generando…" : "Generar Kit"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs opacity-70">Tip: pega adjetivos, estilo y colores.</p>
         </form>
 
-        {error && <div style={{ marginTop: 12, color: "#b42318" }}>{error}</div>}
+        <p className="mt-5 text-center text-sm opacity-70">
+          Versión lite • sin registro • pensado para emprendedoras
+        </p>
       </section>
 
-      {preview && (
-        <section style={{ marginTop: 28 }}>
-          <h3 style={{ fontSize: 22, marginBottom: 12 }}>Preview</h3>
-
-          <div className="previewGrid">
-            {/* Columna izquierda: Paleta */}
-            <div className="previewCard">
-              <div style={{ fontWeight: 600, marginBottom: 8 }}>Palette</div>
-              <div className="swatchRow">
-                {preview.colors.map((c) => (
-                  <div
-                    key={c}
-                    title={c}
-                    style={{
-                      width: 88,
-                      height: 88,
-                      borderRadius: 12,
-                      border: "1px solid #e5e5e5",
-                      background: c,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Columna derecha: Slogans */}
-            <div className="previewCard">
-              <div style={{ fontWeight: 600, marginBottom: 8 }}>Choose your slogan</div>
-              <div style={{ display: "grid", gap: 12 }}>
-                {preview.slogans.map((s, i) => (
-                  <label key={i} className="sloganCard">
-                    <input
-                      type="radio"
-                      name="slogan"
-                      checked={chosen === s}
-                      onChange={() => setChosen(s)}
-                      style={{ marginTop: 2 }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 600, marginBottom: 2 }}>Option {i + 1}</div>
-                      <div style={{ opacity: 0.9, lineHeight: 1.45 }}>{s}</div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Wordmark: ocupa todo el ancho */}
-            <div
-              className="previewCard previewFull"
-              dangerouslySetInnerHTML={{ __html: preview.logoSVG }}
-            />
-
-            {/* Botón descarga: fila completa */}
-            <div className="previewFull" style={{ marginTop: 4 }}>
-              <button onClick={handleDownload} disabled={downloading} style={buttonStyle}>
-                {downloading ? "Preparing ZIP…" : "Download Brand Kit"}
-              </button>
-            </div>
-          </div>
-        </section>
->>>>>>> 4519612185e08ac69cc8235c6adeafe63cbd010e
-      )}
+      <footer className="mx-auto max-w-5xl px-6 py-12 text-sm opacity-70 text-center">
+        © {new Date().getFullYear()} ByOlisJo — beige & gold aesthetic
+      </footer>
     </main>
   );
 }
-<<<<<<< HEAD
-=======
-
-const inputStyle: React.CSSProperties = {
-  padding: "10px 12px",
-  border: "1px solid #e5e5e5",
-  borderRadius: 8,
-  outline: "none",
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  borderRadius: 10,
-  border: "1px solid #e4d9c7",
-  background: "#f1e6d6",
-  cursor: "pointer",
-};
->>>>>>> 4519612185e08ac69cc8235c6adeafe63cbd010e
