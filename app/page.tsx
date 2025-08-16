@@ -4,69 +4,91 @@ import { useState } from "react";
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function onGenerate(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setLoading(true); setError(null); setData(null);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
+      if (!res.ok) throw new Error("No se pudo generar el kit");
       const json = await res.json();
-      console.log("Kit:", json);
-      alert("¡Kit generado! (abre la consola para ver los datos)");
-    } catch {
-      alert("Hubo un problema al generar el kit.");
-    } finally {
-      setLoading(false);
-    }
+      setData(json);
+    } catch (err: any) {
+      setError(err.message || "Error generando kit");
+    } finally { setLoading(false); }
   }
 
   return (
     <main className="min-h-screen bg-[#efe6d8] text-[#1f1b16]">
-      <header className="mx-auto max-w-5xl px-6 pt-14 text-center">
-        <span className="inline-block rounded-full border px-3 py-1 text-xs tracking-wide">
-          ByOlisJo — Brand Kit Lite
-        </span>
-        <h1 className="mt-5 text-4xl md:text-6xl font-extrabold leading-tight">
-          Identidad <span className="underline decoration-[#c3a572]">premium</span> en 3 minutos
-        </h1>
-        <p className="mt-4 text-lg opacity-80">
-          Describe tu marca y te damos paleta, tipografías, voz y eslogan listos para usar.
-        </p>
-      </header>
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-semibold mb-2">ByOlisJo Brand Kit Lite</h1>
+        <p className="opacity-80 mb-8">Describe tu marca y obtén un kit visual & de voz en segundos.</p>
 
-      <section className="mx-auto mt-10 max-w-3xl px-6">
-        <form onSubmit={onGenerate} className="rounded-2xl bg-white/80 shadow p-4 md:p-6 border border-black/10">
-          <label className="block text-sm font-medium mb-2">Describe tu marca</label>
-          <div className="flex gap-2">
-            <input
-              value={prompt}
-              onChange={(e)=>setPrompt(e.target.value)}
-              placeholder='ej: "moderna, femenina, elegante, beige y dorado, joyas artesanales"'
-              className="flex-1 rounded-xl border border-black/10 px-4 py-3 outline-none"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-xl px-5 py-3 bg-[#c3a572] text-white font-semibold disabled:opacity-60"
-            >
-              {loading ? "Generando…" : "Generar Kit"}
-            </button>
-          </div>
-          <p className="mt-2 text-xs opacity-70">Tip: pega adjetivos, estilo y colores.</p>
+        <form onSubmit={onGenerate} className="bg-white/70 rounded-2xl p-4 shadow">
+          <label className="block text-sm mb-2">Describe tu marca</label>
+          <input
+            value={prompt}
+            onChange={e=>setPrompt(e.target.value)}
+            placeholder={`ej: "moderna, femenina, elegante, beige y dorado, joyas artesanales"`}
+            className="w-full rounded-xl px-3 py-2 border border-black/10 focus:outline-none"
+          />
+          <button disabled={loading} className="mt-3 rounded-xl px-4 py-2 border">
+            {loading ? "Generando…" : "Generar Kit"}
+          </button>
         </form>
 
-        <p className="mt-5 text-center text-sm opacity-70">
-          Versión lite • sin registro • pensado para emprendedoras
-        </p>
-      </section>
+        {error && <p className="mt-4 text-red-700">{error}</p>}
 
-      <footer className="mx-auto max-w-5xl px-6 py-12 text-sm opacity-70 text-center">
-        © {new Date().getFullYear()} ByOlisJo — beige & gold aesthetic
-      </footer>
+        {data && (
+          <section className="mt-8 space-y-6">
+            <div className="bg-white rounded-2xl p-4 shadow">
+              <h2 className="text-xl font-semibold">Paleta — {data.palette.name}</h2>
+              <div className="flex gap-2 mt-3">
+                {data.palette.colors.map((c:string)=>(
+                  <div key={c} className="h-12 w-12 rounded-lg border" style={{background:c}} title={c}/>
+                ))}
+              </div>
+              <p className="mt-2 text-sm opacity-80">{data.palette.colors.join(" · ")}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-4 shadow">
+              <h3 className="font-medium">Tipografías</h3>
+              <p className="opacity-80 text-sm">Heading: <b>{data.font.heading}</b> — Body: <b>{data.font.body}</b></p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-4 shadow">
+              <h3 className="font-medium">Voz de marca</h3>
+              <p className="opacity-80">{data.voice}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-4 shadow">
+              <h3 className="font-medium">Slogan propuesto</h3>
+              <p className="opacity-80">{data.slogan}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-4 shadow">
+              <h3 className="font-medium">3 posts de arranque</h3>
+              <ul className="list-disc pl-5 opacity-90">
+                {data.posts.map((p:any,i:number)=>(
+                  <li key={i}><b>{p.title}:</b> {p.copy}</li>
+                ))}
+              </ul>
+            </div>
+
+            <a href={data.canvaSearch} target="_blank" className="inline-block rounded-xl px-4 py-2 border">
+              Abrir ideas relacionadas en Canva
+            </a>
+
+            <p className="opacity-70 text-sm">{data.tip}</p>
+          </section>
+        )}
+      </div>
     </main>
   );
 }
