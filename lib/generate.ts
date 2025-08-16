@@ -42,12 +42,63 @@ export function generatePalette(seed: string) {
   return unique;
 }
 
+<<<<<<< HEAD
 export function generateSlogan(name: string, desc: string, audience: string) {
   const verbs = ["Elevate","Inspire","Craft","Shine","Empower","Connect","Design"];
   const values = ["elegance","clarity","growth","creativity","impact","confidence","simplicity"];
   const v = verbs[(hashString(name+desc) % verbs.length)];
   const val = values[(hashString(audience+name) % values.length)];
   return `${v} your ${val} — ${name}`.slice(0, 60);
+=======
+// Genera 5 slogans elegantes basados en el nombre, descripción y público
+export function generateSlogans(name: string, desc: string, audience: string): string[] {
+  const clean = (s: string) =>
+    (s || "")
+      .replace(/[^\p{L}\p{N}\s]/gu, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const n = clean(name);
+  const d = clean(desc);
+  const a = clean(audience);
+
+  const kws = Array.from(
+    new Set(
+      (d + " " + a)
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 3)
+        .slice(0, 6)
+    )
+  );
+  const k1 = kws[0] || "diseño";
+  const k2 = kws[1] || "artesanal";
+  const k3 = kws[2] || "elegante";
+
+  const patterns = [
+    `${n}: ${k1} que inspira, ${k2} que perdura.`,
+    `${n} — ${k1} ${k2}, esencia ${k3}.`,
+    `Donde ${k1} y ${k2} se encuentran: ${n}.`,
+    `${n}: detalles ${k2}, estilo ${k3}.`,
+    `${n} • ${k1} con alma ${k2}.`,
+    `Elegancia ${k3} con carácter ${k2} — ${n}.`,
+    `${n}: creado para mentes que aman lo ${k1}.`,
+    `${n} — belleza ${k2}, actitud ${k3}.`,
+    `Más que ${k1}: ${n}.`,
+    `${n}: tu lenguaje de ${k1} en clave ${k3}.`,
+  ];
+
+  const seed = (n + "|" + d + "|" + a).split("")
+    .reduce((h, ch) => ((h << 5) - h + ch.charCodeAt(0)) | 0, 0);
+
+  const picked: string[] = [];
+  for (let i = 0, idx = Math.abs(seed) % patterns.length; picked.length < 5 && i < 20; i++) {
+    const p = patterns[idx % patterns.length];
+    if (!picked.includes(p)) picked.push(p);
+    idx += 3;
+  }
+  return picked.slice(0, 5);
+>>>>>>> 4519612185e08ac69cc8235c6adeafe63cbd010e
 }
 
 export function generateWordmarkSVG(name: string, hex: string) {

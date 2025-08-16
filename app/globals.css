@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* app/globals.css */
 
 /* Reset básico */
@@ -43,6 +44,126 @@ input, button {
   font-size: 1rem;
 }
 button {
+=======
+:root {
+  --bg: #f7f2ea;
+  --fg: #1f1b16;
+  --gold: #b08d57;
+  --beige: #efe6d9;
+}
+
+* { box-sizing: border-box; }
+html, body { padding: 0; margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+.font-serif { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
+
+button {
+  border: 1px solid var(--gold);
+  background: linear-gradient(180deg, #f9f4ec, #efe6d9);
+  color: var(--fg);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform .05s ease;
+}
+button:hover { transform: translateY(-1px); }
+input, textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d6c8b3;
+  background: #fffdfa;
+}
+.card {
+  border: 1px solid #e4d8c6;
+  border-radius: 16px;
+  background: #fffefa;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.03);
+}
+.badge { font-size: 11px; padding: 3px 8px; border: 1px solid var(--gold); border-radius: 999px; }
+hr { border: none; height: 1px; background: #eadfce; margin: 20px 0; }
+a { color: var(--fg); text-decoration: underline; }/* --- ByOlisJo: Preview responsive layout --- */
+.previewGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;        /* móvil: una columna */
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .previewGrid {
+    grid-template-columns: 320px 1fr; /* desktop: 2 columnas */
+  }
+}
+
+.swatchRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.previewCard {
+  background: #ffffff;
+  border: 1px solid #e6dfd4;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.previewFull {
+  grid-column: 1 / -1;               /* ocupa todo el ancho del grid */
+}
+
+.sloganCard {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e6dfd4;
+  border-radius: 10px;
+  cursor: pointer;
+}
+/* --- ByOlisJo: Preview responsive layout --- */
+.previewGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;        /* móvil: una columna */
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .previewGrid {
+    grid-template-columns: 320px 1fr; /* desktop: 2 columnas */
+  }
+}
+
+.swatchRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.previewCard {
+  background: #ffffff;
+  border: 1px solid #e6dfd4;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.previewFull {
+  grid-column: 1 / -1;               /* ocupa todo el ancho del grid */
+}
+
+.sloganCard {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e6dfd4;
+  border-radius: 10px;
+>>>>>>> 4519612185e08ac69cc8235c6adeafe63cbd010e
   cursor: pointer;
 }
 

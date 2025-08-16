@@ -22,11 +22,15 @@
       {
         "name": "next"
       }
+<<<<<<< HEAD
     ],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
+=======
+    ]
+>>>>>>> 4519612185e08ac69cc8235c6adeafe63cbd010e
   },
   "include": [
     "next-env.d.ts",
@@ -37,4 +41,8 @@
   "exclude": [
     "node_modules"
   ]
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 4519612185e08ac69cc8235c6adeafe63cbd010e
