@@ -1,10 +1,20 @@
 // app/api/generate/route.ts
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+type Palette = { name: string; colors: string[] };
+type Font = { heading: string; body: string };
+type Proposal = {
+  style: string;
+  palette: Palette;
+  font: Font;
+  voice: string;
+  slogan: string;
+  posts: { title: string; copy: string }[];
+  canvaSearch: string;
+  tip: string;
+};
 
-/** Hash simple y determinístico según el texto */
+/* ---------- utilidades determinísticas ---------- */
 function hash(s: string) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) {
@@ -14,129 +24,129 @@ function hash(s: string) {
   return h >>> 0;
 }
 
-/** Paletas agrupadas por estilo */
-const PALETTES = {
-  elegante: [
-    { name: "Beige & Gold Premium", colors: ["#F5EFE6","#E8D9C5","#C3A572","#8C6B3E","#27231F"] },
-    { name: "Marfil & Caramelo",    colors: ["#FBF7F1","#E7D9C8","#BDA07B","#8B6A46","#2A2420"] },
-  ],
-  moderna: [
-    { name: "Azules Tech",          colors: ["#E7F1FF","#CFE2FF","#7EB3FF","#2B6CB0","#101622"] },
-    { name: "Neón sutil",           colors: ["#F3FFF7","#D6FFE7","#59E3A7","#1E7F5C","#101A16"] },
-  ],
-  suave: [
-    { name: "Lila & Nude Soft",     colors: ["#F3ECF7","#E6D9EE","#C9B7D6","#9C84AE","#2C2730"] },
-    { name: "Rosa & Arena",         colors: ["#FFF1F3","#FADDE1","#F3B6C1","#C87993","#2C2224"] },
-  ],
-  terracota: [
-    { name: "Terracota & Rosa",     colors: ["#F9EDEA","#F3C7BE","#E39F8C","#B56A55","#2B1F1D"] },
-    { name: "Arcilla & Oliva",      colors: ["#FAF3E7","#EBD8BF","#C88C5A","#6E7F58","#2A271F"] },
-  ],
-} as const;
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100; l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+  const toHex = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
 
-/** Fuentes por estilo */
-const FONTS = {
-  elegante: { heading: "Cormorant Garamond", body: "Inter" },
-  moderna:  { heading: "DM Serif Display",    body: "Sora"  },
-  suave:    { heading: "Playfair Display",    body: "Manrope"},
-  terracota:{ heading: "Libre Baskerville",   body: "Nunito"},
-} as const;
+/* paleta basada en semilla (sin palabras clave) */
+function buildPalette(seed: number): Palette {
+  const baseHue = seed % 360;
+  const s = 30 + (seed % 20); // 30–49%
+  const l = 38 + (Math.floor(seed / 7) % 16); // 38–53%
 
-/** Voz por estilo */
-const VOICES = {
-  elegante: "Elegante, clara, orientada a valor percibido y resultados.",
-  moderna:  "Directa, útil y accionable; evita adornos.",
-  suave:    "Humana, empática, explica con ejemplos simples.",
-  terracota:"Cálida y cercana; destaca lo artesanal y honesto.",
-} as const;
+  const colors = [
+    hslToHex((baseHue + 0) % 360, s + 8, l + 4),
+    hslToHex((baseHue + 22) % 360, s + 12, l + 8),
+    hslToHex((baseHue + 185) % 360, s + 6, l),
+    hslToHex((baseHue + 310) % 360, s + 10, l - 2),
+    hslToHex((baseHue + 355) % 360, s + 4, l - 6),
+  ];
 
-type Body = { prompt?: string; count?: number; startSeed?: number };
+  // nombre simpático según tono
+  const hue = baseHue;
+  const name =
+    hue < 25  ? "Caramelo & Crema" :
+    hue < 70  ? "Dorado Suave" :
+    hue < 150 ? "Verde Néctar" :
+    hue < 210 ? "Azules Modernos" :
+    hue < 270 ? "Lilas & Lavanda" :
+    hue < 320 ? "Rosa Arcilla" :
+                "Nude Premium";
 
+  return { name, colors };
+}
+
+const FONTS: Font[] = [
+  { heading: "Cormorant Garamond", body: "Inter" },
+  { heading: "DM Serif Display",   body: "Sora"  },
+  { heading: "Playfair Display",   body: "Manrope" },
+  { heading: "Libre Baskerville",  body: "Nunito"  },
+];
+
+const VOICES = [
+  "Elegante, clara, orientada a valor percibido.",
+  "Directa y accionable; evita adornos.",
+  "Humana y empática; explica con ejemplos.",
+  "Cálida y artesanal, honesta y cercana.",
+];
+
+function pick<T>(arr: T[], seed: number) {
+  return arr[seed % arr.length];
+}
+
+function buildSlogan(seed: number, brand: string) {
+  const lines = [
+    "Elegancia que comunica valor.",
+    "Innovación con identidad.",
+    "Sutileza que enamora.",
+    "Calidez artesanal que conecta.",
+    "Claro. Útil. Memorables.",
+    "Belleza sobria, impacto real.",
+  ];
+  const s = pick(lines, seed);
+  // incluimos nombre a veces para variación
+  return (seed % 2 === 0 && brand.trim()) ? `${s} — ${brand.trim()}.` : s;
+}
+
+/* ---------- construcción de una propuesta ---------- */
+function buildProposal(prompt: string, variantIndex: number): Proposal {
+  const seed = hash(`${prompt}#${variantIndex}`);
+  const palette = buildPalette(seed);
+  const font = pick(FONTS, seed >> 3);
+  const voice = pick(VOICES, seed >> 5);
+  const style = ["elegante", "moderna", "suave", "terracota"][seed % 4];
+
+  const posts = [
+    { title: "Presenta tu promesa",  copy: "En una frase: ¿qué cambias en la vida de tu cliente?" },
+    { title: "Color en contexto",    copy: `Usa ${palette.colors[2]} para CTA y ${palette.colors[4]} para texto principal.` },
+    { title: "CTA que convierte",    copy: "Pide una acción única y medible. Ej.: “Descarga tu guía visual”." },
+  ];
+
+  const canvaQuery  = encodeURIComponent(`${palette.name} ${font.heading} ${font.body} brand kit mockup`);
+  const canvaSearch = `https://www.canva.com/templates/?query=${canvaQuery}`;
+
+  return {
+    style,
+    palette,
+    font,
+    voice,
+    slogan: buildSlogan(seed, prompt),
+    posts,
+    canvaSearch,
+    tip: "Abre en Canva y ajusta contraste (ideal AA).",
+  };
+}
+
+/* ---------- handler ---------- */
 export async function POST(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
+  const url = new URL(req.url);
+  const nParam = url.searchParams.get("n");
+  const n = Math.max(1, Math.min(12, Number.isFinite(Number(nParam)) ? Number(nParam) : 1)); // 1..12
 
-    // Admite query (?n=) o body (count/startSeed)
-    const qN = Number(searchParams.get("n"));
-    const bodyJson = (await req.json().catch(() => ({}))) as Body;
+  let body: any = {};
+  try { body = await req.json(); } catch {}
+  const prompt: string = (body?.prompt || "").toString();
 
-    const txt = (bodyJson.prompt || "brand").toLowerCase().trim();
-    const count = Math.max(
-      1,
-      Math.min(50, Number.isFinite(qN) && qN! > 0 ? (qN as number) : (bodyJson.count ?? 1))
-    );
-    const startSeed = Math.max(0, Math.floor(bodyJson.startSeed ?? 0));
-
-    // Estilos disponibles
-    const styles = ["elegante", "moderna", "suave", "terracota"] as const;
-
-    // ⚠️ IMPORTANTE: el índice base del estilo incluye startSeed para que cada lote empiece distinto
-    const styleBaseIdx = (hash(txt) + startSeed) % styles.length;
-
-    // Helpers para variar determinísticamente por seed
-    const pickPalette = (style: (typeof styles)[number], seed: number) => {
-      const group = PALETTES[style];
-      const idx = hash(`${txt}|pal|${seed}`) % group.length;
-      return group[idx];
-    };
-    const pickSlogan = (style: (typeof styles)[number], seed: number) => {
-      const sets: Record<(typeof styles)[number], string[]> = {
-        elegante: [
-          "Elegancia que comunica valor.",
-          "Belleza sobria, impacto real.",
-          "Prestigio que se nota.",
-        ],
-        moderna: [
-          "Innovación con identidad.",
-          "Claro. Útil. Memorables.",
-          "Diseño que acelera decisiones.",
-        ],
-        suave: [
-          "Sutileza que enamora.",
-          "Delicadeza con intención.",
-          "Tu historia, en tonos suaves.",
-        ],
-        terracota: [
-          "Calidez artesanal que conecta.",
-          "Texturas que cuentan historias.",
-          "Raíz y carácter en cada detalle.",
-        ],
-      };
-      const arr = sets[style];
-      return arr[hash(`${txt}|slog|${seed}`) % arr.length];
-    };
-
-    // Construye "count" propuestas usando seeds consecutivos (startSeed..)
-    const options = Array.from({ length: count }, (_, i) => {
-      const seed = startSeed + i;
-      // Rota estilo combinando base e incremento por seed
-      const style = styles[(styleBaseIdx + i) % styles.length];
-
-      const palette = pickPalette(style, seed);
-      const font = FONTS[style];
-      const voice = VOICES[style];
-      const slogan = pickSlogan(style, seed);
-
-      const posts = [
-        { title: "Presenta tu promesa",  copy: "En una frase: ¿qué cambias en la vida de tu cliente? #brandingconpropósito" },
-        { title: "Color en contexto",    copy: `Usa ${palette.colors[2]} para CTA y ${palette.colors[4]} para texto principal.` },
-        { title: "CTA que convierte",    copy: "Pide una acción única y medible. Ej.: “Descarga tu guía visual”." },
-      ];
-
-      const canvaQuery  = encodeURIComponent(`${palette.name} ${font.heading} ${font.body} mockup brand kit`);
-      const canvaSearch = `https://www.canva.com/templates/?query=${canvaQuery}`;
-
-      return {
-        seed, style, palette, font, voice, slogan, posts, canvaSearch,
-        tip: "Exporta esta guía a Canva y ajusta contraste (ideal AA).",
-      };
-    });
-
-    return NextResponse.json(
-      { options, nextStartSeed: startSeed + count },
-      { headers: { "Cache-Control": "no-store" } }
-    );
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Error" }, { status: 500 });
+  if (!prompt.trim()) {
+    // siempre devolvemos array (lo espera el cliente)
+    return NextResponse.json([], { status: 200 });
   }
+
+  const list: Proposal[] = [];
+  for (let i = 0; i < n; i++) {
+    list.push(buildProposal(prompt, i));
+  }
+  return NextResponse.json(list, { status: 200 });
 }
