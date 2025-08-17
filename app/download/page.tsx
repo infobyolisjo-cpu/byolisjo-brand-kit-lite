@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 
 export default function DownloadPage() {
   const search = useSearchParams();
-  const file   = search.get('file')   || 'brand-kit-lite.txt';
   const name   = search.get('name')   || 'Tu Marca';
   const slogan = search.get('slogan') || '';
   const colors = search.get('colors') || '';
@@ -19,7 +18,7 @@ export default function DownloadPage() {
       {colors && <p style={{ opacity: .8, marginBottom: 12 }}>Colores: {colors}</p>}
 
       <a
-        href={`/api/zip`}
+        href="/api/zip"
         style={{ display: 'inline-block', padding: '10px 14px', border: '1px solid #d6c8b3', borderRadius: 10 }}
       >
         Descargar archivo
@@ -27,3 +26,4 @@ export default function DownloadPage() {
     </main>
   );
 }
+
