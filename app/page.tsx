@@ -13,6 +13,15 @@ type Proposal = {
   tip: string;
 };
 
+function isProposal(x: any): x is Proposal {
+  return x
+    && x.palette && x.palette.name && Array.isArray(x.palette.colors)
+    && x.font && typeof x.font.heading === "string" && typeof x.font.body === "string"
+    && typeof x.voice === "string"
+    && typeof x.slogan === "string"
+    && Array.isArray(x.posts);
+}
+
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [items, setItems] = useState<Proposal[]>([]);
@@ -30,11 +39,19 @@ export default function Home() {
         body: JSON.stringify({ prompt }),
       });
       if (!res.ok) throw new Error("No se pudo generar");
-      const data = await res.json();
 
-      const list: Proposal[] = Array.isArray(data) ? data : [data];
+      const data = await res.json();
+      const raw: any[] = Array.isArray(data) ? data : [data];
+      const list: Proposal[] = raw.filter(isProposal);
+
+      if (list.length === 0) {
+        setErr("No se pudo generar");
+        if (mode === "replace") setItems([]);
+        return;
+      }
+
       setItems((prev) => (mode === "replace" ? list : [...prev, ...list]));
-      // Desplázate suave al inicio de resultados cuando reemplaza
+
       if (mode === "replace") {
         setTimeout(() => {
           const el = document.getElementById("results");
