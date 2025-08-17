@@ -1,6 +1,9 @@
 // app/api/generate/route.ts
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 /** Hash FNV-1a (determinístico por texto) */
 function hash(s: string) {
   let h = 2166136261 >>> 0;
@@ -9,11 +12,6 @@ function hash(s: string) {
     h = Math.imul(h, 16777619);
   }
   return h >>> 0;
-}
-
-function pick<T>(arr: T[], h: number, salt = ""): T {
-  const idx = (hash(h + "|" + salt) % arr.length) >>> 0;
-  return arr[idx];
 }
 
 function hslToHex(h: number, s: number, l: number) {
@@ -95,7 +93,7 @@ const SLOGAN_TEMPLATES = [
   "Esencia de {K1}, actitud de {K2}."
 ];
 
-/** Extrae 2 palabras relevantes del prompt (sin depender de keywords fijas) */
+/** Extrae 2 palabras del prompt (sin depender de keywords fijas) */
 function extractKeywords(txt: string) {
   const words = (txt || "")
     .toLowerCase()
@@ -116,21 +114,21 @@ export async function POST(req: Request) {
   const salt = (seed ?? "").toString();
   const key = txt + "|" + salt;
 
-  // 1) Paleta desde el hash del texto (sin reglas por keywords)
+  // 1) Paleta desde el hash del texto
   const palette = paletteFromTextKey(key);
 
-  // 2) Fuentes determinísticas por hash
+  // 2) Fuentes determinísticas
   const h = hash(key);
   const heading = HEADINGS[h % HEADINGS.length];
   const body    = BODIES[(h >> 7) % BODIES.length];
 
-  // 3) Voz y slogan variables por hash + palabras del prompt
+  // 3) Voz y slogan
   const voice = VOICES[(h >> 11) % VOICES.length];
   const [k1, k2] = extractKeywords(txt);
   const tmpl = SLOGAN_TEMPLATES[(h >> 13) % SLOGAN_TEMPLATES.length];
   const slogan = tmpl.replace("{K1}", capitalize(k1)).replace("{K2}", k2);
 
-  // 4) Posts base
+  // 4) Posts
   const posts = [
     { title: "Promesa clara",  copy: "En una frase: ¿qué cambias en la vida de tu cliente? #brandingconpropósito" },
     { title: "Color en contexto", copy: `Usa ${palette.colors[2]} para CTA y ${palette.colors[4] || palette.colors[0]} para texto principal.` },
@@ -140,15 +138,10 @@ export async function POST(req: Request) {
   const canvaQuery  = encodeURIComponent(`${palette.name} ${heading} ${body} mockup brand kit`);
   const canvaSearch = `https://www.canva.com/templates/?query=${canvaQuery}`;
 
-  return NextResponse.json({
-    palette,
-    font: { heading, body },
-    voice,
-    slogan,
-    posts,
-    canvaSearch,
-    tip: "Copia los colores y pruébalos en Canva; revisa contraste (ideal AA).",
-  });
+  return NextResponse.json(
+    { palette, font: { heading, body }, voice, slogan, posts, canvaSearch, tip: "Copia los colores y pruébalos en Canva; revisa contraste (ideal AA)." },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
 
 function capitalize(s: string) {
