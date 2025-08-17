@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Hash FNV-1a (determinístico por texto) */
+/** Hash FNV-1a */
 function hash(s: string) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) {
@@ -30,15 +30,14 @@ function hslToHex(h: number, s: number, l: number) {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
 }
 
-/** Genera una paleta desde el hash del prompt (sin keywords) */
-function paletteFromTextKey(key: string) {
+/** Paleta desde texto+seed (sin keywords fijas) */
+function paletteFromKey(key: string) {
   const h = hash(key);
   const baseHue = h % 360;
-  const mode = (h >> 3) % 4; // 0..3 elige esquema
-  const satBase = 35 + (h % 30); // 35..64
+  const mode = (h >> 3) % 4; // 0..3
+  const satBase = 35 + (h % 30);        // 35..64
   const lightBase = 35 + ((h >> 5) % 25); // 35..59
 
-  // 4 esquemas: análogo, triádico, complementario suave, pastel
   let hues: number[];
   if (mode === 0) {
     hues = [0, 20, -20, 180, 320].map(d => (baseHue + d + 360) % 360);
@@ -47,7 +46,6 @@ function paletteFromTextKey(key: string) {
   } else if (mode === 2) {
     hues = [0, 180, 10, -10, 220].map(d => (baseHue + d + 360) % 360);
   } else {
-    // pastel (baja saturación, más luz)
     const s = Math.max(18, satBase - 18);
     const l = Math.min(78, lightBase + 18);
     const hs = [0, 25, 200, 320, 50].map(d => (baseHue + d + 360) % 360);
@@ -63,37 +61,23 @@ function paletteFromTextKey(key: string) {
     return hslToHex(hh, s, l);
   });
 
-  // Acento oro si cae demasiado neutra
-  if (((h >> 9) % 5) === 0) colors[4] = "#B08D57";
-
+  if (((h >> 9) % 5) === 0) colors[4] = "#B08D57"; // acento dorado a veces
   return { name: `Scheme ${mode}-${baseHue}`, colors: Array.from(new Set(colors)).slice(0,5) };
 }
 
-const HEADINGS = [
-  "Cormorant Garamond","Playfair Display","DM Serif Display","Libre Baskerville","Merriweather","Cinzel",
-  "Marcellus","Prata","Lora","Cormorant Infant"
-];
-const BODIES = [
-  "Inter","Sora","Manrope","Nunito","Work Sans","Source Sans 3","Poppins","Rubik","Plus Jakarta Sans","Urbanist"
-];
-
-const VOICES = [
+const HEADINGS = ["Cormorant Garamond","Playfair Display","DM Serif Display","Libre Baskerville","Merriweather","Cinzel","Marcellus","Prata","Lora","Cormorant Infant"];
+const BODIES   = ["Inter","Sora","Manrope","Nunito","Work Sans","Source Sans 3","Poppins","Rubik","Plus Jakarta Sans","Urbanist"];
+const VOICES   = [
   "Elegante y clara; orientada a valor percibido y resultados.",
   "Directa, útil y accionable; evita adornos innecesarios.",
   "Humana y cercana; explica con ejemplos simples.",
   "Cálida y honesta; resalta lo artesanal y auténtico."
 ];
-
 const SLOGAN_TEMPLATES = [
-  "{K1} con {K2}.",
-  "Donde {K1} encuentra {K2}.",
-  "Hecho para {K1}, pensado en {K2}.",
-  "Tu {K1}, con {K2}.",
-  "Diseño que impulsa {K1} y {K2}.",
-  "Esencia de {K1}, actitud de {K2}."
+  "{K1} con {K2}.","Donde {K1} encuentra {K2}.","Hecho para {K1}, pensado en {K2}.",
+  "Tu {K1}, con {K2}.","Diseño que impulsa {K1} y {K2}.","Esencia de {K1}, actitud de {K2}."
 ];
 
-/** Extrae 2 palabras del prompt (sin depender de keywords fijas) */
 function extractKeywords(txt: string) {
   const words = (txt || "")
     .toLowerCase()
@@ -105,46 +89,50 @@ function extractKeywords(txt: string) {
   const k2 = uniq[1] || "identidad";
   return [k1, k2];
 }
+function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-type Input = { prompt: string; seed?: string | number };
+type Input = { prompt: string; count?: number; startSeed?: number };
 
+/** Devuelve tantas opciones como pidas; usa startSeed para “paginación infinita”. */
 export async function POST(req: Request) {
-  const { prompt, seed } = (await req.json()) as Input;
-  const txt = (prompt || "").trim();
-  const salt = (seed ?? "").toString();
-  const key = txt + "|" + salt;
+  try {
+    const { prompt, count = 3, startSeed = 0 } = (await req.json()) as Input;
+    const txt = (prompt || "").trim();
 
-  // 1) Paleta desde el hash del texto
-  const palette = paletteFromTextKey(key);
+    // Seguridad: evita counts absurdos por request
+    const n = Math.max(1, Math.min(50, Math.floor(count)));
 
-  // 2) Fuentes determinísticas
-  const h = hash(key);
-  const heading = HEADINGS[h % HEADINGS.length];
-  const body    = BODIES[(h >> 7) % BODIES.length];
+    const options = Array.from({ length: n }).map((_, i) => {
+      const seed = startSeed + i;
+      const key = `${txt}|${seed}`;
 
-  // 3) Voz y slogan
-  const voice = VOICES[(h >> 11) % VOICES.length];
-  const [k1, k2] = extractKeywords(txt);
-  const tmpl = SLOGAN_TEMPLATES[(h >> 13) % SLOGAN_TEMPLATES.length];
-  const slogan = tmpl.replace("{K1}", capitalize(k1)).replace("{K2}", k2);
+      const palette = paletteFromKey(key);
+      const h = hash(key);
+      const heading = HEADINGS[h % HEADINGS.length];
+      const body    = BODIES[(h >> 7) % BODIES.length];
+      const voice   = VOICES[(h >> 11) % VOICES.length];
 
-  // 4) Posts
-  const posts = [
-    { title: "Promesa clara",  copy: "En una frase: ¿qué cambias en la vida de tu cliente? #brandingconpropósito" },
-    { title: "Color en contexto", copy: `Usa ${palette.colors[2]} para CTA y ${palette.colors[4] || palette.colors[0]} para texto principal.` },
-    { title: "CTA único",      copy: "Pide una acción medible. Ej.: “Descarga tu guía visual”." },
-  ];
+      const [k1, k2] = extractKeywords(txt);
+      const tmpl = SLOGAN_TEMPLATES[(h >> 13) % SLOGAN_TEMPLATES.length];
+      const slogan = tmpl.replace("{K1}", capitalize(k1)).replace("{K2}", k2);
 
-  const canvaQuery  = encodeURIComponent(`${palette.name} ${heading} ${body} mockup brand kit`);
-  const canvaSearch = `https://www.canva.com/templates/?query=${canvaQuery}`;
+      const posts = [
+        { title: "Promesa clara",  copy: "En una frase: ¿qué cambias en la vida de tu cliente? #brandingconpropósito" },
+        { title: "Color en contexto", copy: `Usa ${palette.colors[2]} para CTA y ${palette.colors[4] || palette.colors[0]} para texto principal.` },
+        { title: "CTA único",      copy: "Pide una acción medible. Ej.: “Descarga tu guía visual”." },
+      ];
 
-  return NextResponse.json(
-    { palette, font: { heading, body }, voice, slogan, posts, canvaSearch, tip: "Copia los colores y pruébalos en Canva; revisa contraste (ideal AA)." },
-    { headers: { "Cache-Control": "no-store" } }
-  );
+      const canvaQuery  = encodeURIComponent(`${palette.name} ${heading} ${body} mockup brand kit`);
+      const canvaSearch = `https://www.canva.com/templates/?query=${canvaQuery}`;
+
+      return { seed, palette, font: { heading, body }, voice, slogan, posts, canvaSearch };
+    });
+
+    return NextResponse.json(
+      { options, nextStartSeed: startSeed + n },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Error" }, { status: 500 });
+  }
 }
-
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
