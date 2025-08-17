@@ -59,8 +59,9 @@ export async function POST(req: Request) {
 
   // Estilos disponibles y estilo base en función del hash del texto
   const styles = ["elegante", "moderna", "suave", "terracota"] as const;
-  // Estilo base depende también de la seed, así cada lote cambia
-  const styleIdx = (hash(txt) + startSeed) % styles.length;
+ // Estilo base depende también de la seed, así cada lote cambia
+const styleIdx = (hash(txt) + startSeed) % styles.length;
+
 
   // Helpers para variar determinísticamente por offset
   const pickPalette = (style: (typeof styles)[number], offset: number) => {
