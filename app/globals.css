@@ -1,77 +1,56 @@
 /* app/globals.css */
 
-/* Reset básico */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Brand */
+  --accent:        #9B6E2F;
+  --accent-dark:   #7A5420;
+  --accent-light:  rgba(155,110,47,0.1);
+  --accent-glow:   rgba(155,110,47,0.18);
+
+  /* Backgrounds */
+  --bg-base:    #F5EFE6;
+  --bg-surface: #FFFFFF;
+  --bg-muted:   #FAF6F0;
+  --bg-dark:    #1A1208;
+
+  /* Text */
+  --text-primary:   #1A1208;
+  --text-secondary: #5C4A2E;
+  --text-muted:     #9C8878;
+  --text-on-dark:   #FAF6F0;
+
+  /* Borders */
+  --border:        1px solid rgba(155,110,47,0.18);
+  --border-strong: 1px solid rgba(155,110,47,0.35);
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(26,18,8,0.06), 0 2px 8px rgba(26,18,8,0.04);
+  --shadow-md:  0 4px 16px rgba(26,18,8,0.08), 0 12px 32px rgba(26,18,8,0.06);
+  --shadow-lg:  rgba(50,30,10,0.14) 0px 24px 48px -16px, rgba(0,0,0,0.06) 0px 8px 24px -8px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --max-w: 960px;
+  --px: clamp(1rem, 4vw, 2rem);
+}
 
 html, body { height: 100%; }
 
-/* Fuente base (se asigna desde layout.tsx con variables) */
 body {
-  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  background: #efe6d8; /* beige base */
-  color: #201810;      /* café oscuro */
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Links */
 a { color: inherit; text-decoration: none; }
-
-/* Hover bonito para los enlaces del header */
-.navlink { transition: transform .15s ease, border-color .15s ease, background .2s ease; }
-.navlink:hover { transform: translateY(-1px); border-color: #8e7759; background: #fffaf2; }
-
-/* Formularios */
-input, button { font: inherit; font-size: 1rem; }
-button {
-  border: 1px solid #e6dfd4;
-  border-radius: 10px;
-  cursor: pointer;
-  background: linear-gradient(180deg, #f9f4ec, #efe6d9);
-  padding: 10px 14px;
-  transition: transform .05s ease;
-}
-button:hover { transform: translateY(-1px); }
-
-input, textarea, select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #d6c8b3;
-  background: #fffdfa;
-}
-
-/* Tarjetas y badges */
-.card {
-  border: 1px solid #e4d8c6;
-  border-radius: 16px;
-  background: #fffefa;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.03);
-}
-.badge { font-size: 11px; padding: 3px 8px; border: 1px solid #b08d57; border-radius: 999px; }
-
-/* Separador */
-hr { border: none; height: 1px; background: #eadfce; margin: 20px 0; }
-
-/* Layout responsive para el preview */
-.previewGrid { display: grid; gap: 16px; grid-template-columns: 1fr; align-items: start; }
-@media (min-width: 900px) { .previewGrid { grid-template-columns: 320px 1fr; } }
-
-.swatchRow { display: flex; gap: 12px; flex-wrap: wrap; }
-
-.previewCard { background: #ffffff; border: 1px solid #e6dfd4; border-radius: 10px; padding: 12px; }
-
-.previewFull { grid-column: 1 / -1; }
-
-.sloganCard {
-  display: grid;
-  grid-template-columns: 20px 1fr;
-  gap: 12px;
-  padding: 10px 12px;
-  background: #ffffff;
-  border: 1px solid #e6dfd4;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
+img { display: block; max-width: 100%; }
