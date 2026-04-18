@@ -393,52 +393,92 @@ export default function Home() {
       <section style={{
         background: "var(--bg-base)",
         borderTop: "1px solid var(--border-light)",
-        padding: "clamp(56px, 8vw, 96px) 0",
+        padding: "clamp(72px, 10vw, 120px) 0",
       }}>
         <div style={{
           maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--px)",
         }}>
-          {/* Eyebrow rule */}
+
+          {/* Eyebrow — serif + rule */}
           <div style={{
-            display: "flex", alignItems: "center", gap: 12, marginBottom: 28,
+            display: "flex", alignItems: "center", gap: 16, marginBottom: 40,
           }}>
             <div style={{
-              width: 32, height: 1.5,
+              width: 48, height: 1,
               background: "linear-gradient(90deg, var(--gold-500), transparent)",
             }} />
             <span style={{
-              fontSize: 10, fontWeight: 700, letterSpacing: "0.14em",
+              fontFamily: "var(--font-serif)",
+              fontSize: 11, fontWeight: 400, letterSpacing: "0.22em",
               textTransform: "uppercase", color: "var(--gold-700)",
+              fontStyle: "italic",
             }}>
               ByOlisJo
             </span>
           </div>
 
-          {/* Manifesto text */}
+          {/* Manifesto — editorial serif quote */}
+          <blockquote style={{ margin: 0, padding: 0, marginBottom: 48 }}>
+            <p style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(1.75rem, 4vw, 2.75rem)",
+              fontWeight: 400,
+              lineHeight: 1.28,
+              letterSpacing: "-0.01em",
+              color: "var(--text-primary)",
+              fontStyle: "italic",
+              maxWidth: 700,
+            }}>
+              "Diseñado para quien ya hace mucho…
+            </p>
+            <p style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(1.75rem, 4vw, 2.75rem)",
+              fontWeight: 600,
+              lineHeight: 1.28,
+              letterSpacing: "-0.01em",
+              color: "var(--text-primary)",
+              fontStyle: "italic",
+              maxWidth: 700,
+              marginTop: "0.15em",
+            }}>
+              y quiere hacerlo mejor."
+            </p>
+          </blockquote>
+
+          {/* Supporting line — sans */}
           <p style={{
-            fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)",
-            fontWeight: 500, lineHeight: 1.35,
-            letterSpacing: "-0.025em",
-            color: "var(--text-primary)",
-            fontStyle: "italic",
-            maxWidth: 640,
-            marginBottom: 36,
+            fontFamily: "var(--font-sans)",
+            fontSize: 14,
+            color: "var(--text-muted)",
+            letterSpacing: "0.01em",
+            lineHeight: 1.6,
+            maxWidth: 440,
+            marginBottom: 40,
           }}>
-            "Diseñado para quien ya hace mucho…
-            <br />y quiere hacerlo mejor."
+            Identidad visual para emprendedoras que ya tienen presencia
+            y quieren que su marca lo refleje.
           </p>
+
+          {/* Divider */}
+          <div style={{
+            width: 56, height: 1,
+            background: "linear-gradient(90deg, rgba(155,110,47,0.35), transparent)",
+            marginBottom: 40,
+          }} />
 
           {/* Secondary CTA */}
           <button
             onClick={() => setModalOpen(true)}
             style={{
-              display: "inline-flex", alignItems: "center", gap: 10,
+              display: "inline-flex", alignItems: "center", gap: 12,
               background: "transparent",
               color: "var(--gold-700)",
               border: "1.5px solid rgba(155,110,47,0.4)",
-              borderRadius: 10, padding: "13px 24px",
-              fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em",
-              cursor: "pointer", fontFamily: "var(--font-sans)",
+              borderRadius: 10, padding: "14px 28px",
+              fontFamily: "var(--font-sans)",
+              fontSize: 14, fontWeight: 600, letterSpacing: "0.01em",
+              cursor: "pointer",
               transition: "background 0.2s, border-color 0.2s, transform 0.14s",
             }}
             onMouseEnter={(e) => {
@@ -459,6 +499,7 @@ export default function Home() {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </button>
+
         </div>
       </section>
 
@@ -752,8 +793,10 @@ function KitCard({ data, index }: { data: Proposal; index: number }) {
             Kit N°{kit}{data.style ? ` · ${data.style}` : ""}
           </div>
           <h2 style={{
-            fontSize: 21, fontWeight: 700, letterSpacing: "-0.025em",
+            fontFamily: "var(--font-serif)",
+            fontSize: 22, fontWeight: 700, letterSpacing: "-0.01em",
             color: "var(--text-primary)", lineHeight: 1.2,
+            fontStyle: "italic",
           }}>
             {data.palette.name}
           </h2>
@@ -827,7 +870,8 @@ function KitCard({ data, index }: { data: Proposal; index: number }) {
             borderRadius: "0 12px 12px 0",
           }}>
             <p style={{
-              fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em",
+              fontFamily: "var(--font-serif)",
+              fontSize: 21, fontWeight: 500, letterSpacing: "0",
               color: "var(--text-primary)", lineHeight: 1.4, fontStyle: "italic",
             }}>
               "{data.slogan}"

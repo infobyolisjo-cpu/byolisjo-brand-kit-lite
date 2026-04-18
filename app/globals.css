@@ -4,6 +4,7 @@
 
 :root {
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', 'Georgia', ui-serif, serif;
 
   --gold-100: #FDF3DC;
   --gold-300: #E8B84B;
