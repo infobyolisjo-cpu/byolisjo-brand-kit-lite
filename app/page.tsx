@@ -194,8 +194,8 @@ export default function Home() {
                 letterSpacing: "-0.005em",
                 fontStyle: "italic",
               }}>
-                "Construimos identidades con propósito,<br />
-                no plantillas con color."
+                "Tu marca es el primer vistazo.<br />
+                Que diga exactamente quién eres."
               </p>
             </div>
 
