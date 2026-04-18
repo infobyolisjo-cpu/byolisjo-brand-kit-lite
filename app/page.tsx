@@ -1,6 +1,6 @@
 // app/page.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type Proposal = {
   style?: string;
@@ -28,6 +28,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   async function fetchKits(n: number, mode: "replace" | "append") {
     if (!prompt.trim()) return;
@@ -388,6 +389,79 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══ MANIFESTO BLOCK ═══ */}
+      <section style={{
+        background: "var(--bg-base)",
+        borderTop: "1px solid var(--border-light)",
+        padding: "clamp(56px, 8vw, 96px) 0",
+      }}>
+        <div style={{
+          maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--px)",
+        }}>
+          {/* Eyebrow rule */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12, marginBottom: 28,
+          }}>
+            <div style={{
+              width: 32, height: 1.5,
+              background: "linear-gradient(90deg, var(--gold-500), transparent)",
+            }} />
+            <span style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: "0.14em",
+              textTransform: "uppercase", color: "var(--gold-700)",
+            }}>
+              ByOlisJo
+            </span>
+          </div>
+
+          {/* Manifesto text */}
+          <p style={{
+            fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)",
+            fontWeight: 500, lineHeight: 1.35,
+            letterSpacing: "-0.025em",
+            color: "var(--text-primary)",
+            fontStyle: "italic",
+            maxWidth: 640,
+            marginBottom: 36,
+          }}>
+            "Diseñado para quien ya hace mucho…
+            <br />y quiere hacerlo mejor."
+          </p>
+
+          {/* Secondary CTA */}
+          <button
+            onClick={() => setModalOpen(true)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 10,
+              background: "transparent",
+              color: "var(--gold-700)",
+              border: "1.5px solid rgba(155,110,47,0.4)",
+              borderRadius: 10, padding: "13px 24px",
+              fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em",
+              cursor: "pointer", fontFamily: "var(--font-sans)",
+              transition: "background 0.2s, border-color 0.2s, transform 0.14s",
+            }}
+            onMouseEnter={(e) => {
+              const b = e.currentTarget as HTMLButtonElement;
+              b.style.background = "rgba(155,110,47,0.07)";
+              b.style.borderColor = "rgba(155,110,47,0.65)";
+              b.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              const b = e.currentTarget as HTMLButtonElement;
+              b.style.background = "transparent";
+              b.style.borderColor = "rgba(155,110,47,0.4)";
+              b.style.transform = "";
+            }}
+          >
+            Quiero ayuda personalizada
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </button>
+        </div>
+      </section>
+
       {/* ═══ RESULTS ═══ */}
       {items.length > 0 && (
         <section id="results" style={{
@@ -422,7 +496,228 @@ export default function Home() {
         </section>
       )}
 
+      {/* ═══ MODAL ═══ */}
+      {modalOpen && (
+        <ContactModal onClose={() => setModalOpen(false)} />
+      )}
+
     </main>
+  );
+}
+
+/* ─────────────────────────────────────────
+   CONTACT MODAL
+───────────────────────────────────────── */
+function ContactModal({ onClose }: { onClose: () => void }) {
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    firstInputRef.current?.focus();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al enviar");
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Solicitar ayuda personalizada"
+    >
+      <div className="modal-box">
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          style={{
+            position: "absolute", top: 16, right: 18,
+            background: "none", border: "none",
+            fontSize: 20, color: "#9C8878",
+            cursor: "pointer", lineHeight: 1,
+            fontFamily: "var(--font-sans)",
+            transition: "color 0.15s",
+          }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#1A1715")}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#9C8878")}
+        >
+          ×
+        </button>
+
+        {success ? (
+          /* ── Success state ── */
+          <div style={{ textAlign: "center", padding: "16px 0" }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: "50%", margin: "0 auto 20px",
+              background: "linear-gradient(135deg, var(--gold-300), var(--gold-700))",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A0E00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 8, color: "var(--text-primary)" }}>
+              Mensaje enviado
+            </h3>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7 }}>
+              Gracias. Te escribimos pronto.
+            </p>
+          </div>
+        ) : (
+          /* ── Form ── */
+          <>
+            <div style={{ marginBottom: 24 }}>
+              <p style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: "0.14em",
+                textTransform: "uppercase", color: "var(--gold-700)", marginBottom: 8,
+              }}>
+                Ayuda personalizada
+              </p>
+              <h3 style={{
+                fontSize: 22, fontWeight: 700, letterSpacing: "-0.025em",
+                color: "var(--text-primary)", lineHeight: 1.2,
+              }}>
+                Cuéntanos sobre tu marca
+              </h3>
+            </div>
+
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={{
+                  display: "block", fontSize: 12, fontWeight: 600,
+                  color: "var(--text-secondary)", marginBottom: 6, letterSpacing: "0.01em",
+                }}>
+                  Nombre
+                </label>
+                <input
+                  ref={firstInputRef}
+                  type="text"
+                  required
+                  className="modal-input"
+                  placeholder="Tu nombre"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: "block", fontSize: 12, fontWeight: 600,
+                  color: "var(--text-secondary)", marginBottom: 6,
+                }}>
+                  Correo
+                </label>
+                <input
+                  type="email"
+                  required
+                  className="modal-input"
+                  placeholder="tu@correo.com"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: "block", fontSize: 12, fontWeight: 600,
+                  color: "var(--text-secondary)", marginBottom: 6,
+                }}>
+                  Mensaje
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  className="modal-input"
+                  placeholder="Cuéntame sobre tu marca y en qué necesitas ayuda."
+                  value={form.message}
+                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                />
+              </div>
+
+              {error && (
+                <p style={{
+                  fontSize: 12, color: "#B54444",
+                  background: "rgba(181,68,68,0.08)",
+                  border: "1px solid rgba(181,68,68,0.2)",
+                  borderRadius: 8, padding: "9px 12px",
+                }}>
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  marginTop: 4,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  background: loading
+                    ? "#C8B89A"
+                    : "linear-gradient(135deg, #EFC143 0%, #C98A1A 50%, #9B6E2F 100%)",
+                  color: "#1A0E00",
+                  border: "none", borderRadius: 10,
+                  padding: "14px 20px",
+                  fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  fontFamily: "var(--font-sans)",
+                  boxShadow: loading ? "none" : "0 2px 12px rgba(155,110,47,0.32)",
+                  transition: "background 0.2s, box-shadow 0.2s, transform 0.12s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading) (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = "";
+                }}
+              >
+                {loading ? (
+                  <>
+                    <span style={{
+                      width: 14, height: 14,
+                      border: "2px solid rgba(26,14,0,0.2)",
+                      borderTopColor: "#1A0E00", borderRadius: "50%",
+                      display: "inline-block", animation: "spin 0.7s linear infinite",
+                    }} />
+                    Enviando…
+                  </>
+                ) : "Enviar mensaje"}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
