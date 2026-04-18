@@ -22,56 +22,12 @@ function isProposal(x: any): x is Proposal {
     && Array.isArray(x.posts);
 }
 
-/* ─── Styles helpers ─── */
-const S = {
-  /* Header */
-  header: {
-    position: "fixed" as const, top: 0, left: 0, right: 0, zIndex: 100,
-    height: 56,
-    background: "rgba(12,10,7,0.82)",
-    backdropFilter: "saturate(160%) blur(24px)",
-    WebkitBackdropFilter: "saturate(160%) blur(24px)",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-  },
-  headerInner: {
-    maxWidth: "var(--max-w)", margin: "0 auto",
-    padding: "0 var(--px)", height: 56,
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-  },
-  logoText: {
-    fontSize: 14, fontWeight: 700, letterSpacing: "-0.02em", color: "#FAF3E4",
-  },
-  logoDot: { color: "var(--gold-300)", marginLeft: 3 },
-  pill: {
-    fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const,
-    color: "var(--gold-300)",
-    border: "1px solid rgba(232,184,75,0.35)",
-    borderRadius: 999, padding: "3px 10px",
-    background: "rgba(232,184,75,0.08)",
-  },
-
-  /* Hero */
-  hero: {
-    position: "relative" as const, overflow: "hidden",
-    background: "var(--bg-hero)",
-    paddingTop: 120, paddingBottom: 80,
-    display: "flex", flexDirection: "column" as const, alignItems: "center",
-  },
-
-  /* Body */
-  body: {
-    background: "var(--bg-base)",
-    maxWidth: "var(--max-w)", margin: "0 auto",
-    padding: "48px var(--px) 96px",
-  },
-};
-
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [items, setItems] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [inputFocused, setInputFocused] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   async function fetchKits(n: number, mode: "replace" | "append") {
     if (!prompt.trim()) return;
@@ -84,23 +40,18 @@ export default function Home() {
         body: JSON.stringify({ prompt }),
       });
       if (!res.ok) throw new Error("No se pudo generar");
-
       const data = await res.json();
       const raw: any[] = Array.isArray(data) ? data : [data];
       const list: Proposal[] = raw.filter(isProposal);
-
       if (list.length === 0) {
         setErr("No se pudo generar");
         if (mode === "replace") setItems([]);
         return;
       }
-
       setItems((prev) => (mode === "replace" ? list : [...prev, ...list]));
-
       if (mode === "replace") {
         setTimeout(() => {
-          const el = document.getElementById("results");
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 50);
       }
     } catch (e: any) {
@@ -110,198 +61,241 @@ export default function Home() {
     }
   }
 
-  function clearAll() {
-    setItems([]);
-    setErr(null);
-  }
+  function clearAll() { setItems([]); setErr(null); }
 
-  const canSubmit = !loading && !!prompt.trim();
+  const can = !loading && !!prompt.trim();
 
   return (
-    <main style={{ minHeight: "100vh", background: "var(--bg-hero)" }}>
+    <main>
 
-      {/* ── Sticky nav ── */}
-      <header style={S.header}>
-        <div style={S.headerInner}>
-          <span style={S.logoText}>
-            ByOlisJo<span style={S.logoDot}>·</span>
+      {/* ═══ NAV ═══ */}
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        height: 52,
+        background: "rgba(12,10,7,0.78)",
+        backdropFilter: "saturate(160%) blur(28px)",
+        WebkitBackdropFilter: "saturate(160%) blur(28px)",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+      }}>
+        <div style={{
+          maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--px)",
+          height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          {/* Logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", color: "#FAF3E4" }}>
+              ByOlisJo
+            </span>
+            <span style={{
+              width: 1, height: 12,
+              background: "rgba(255,255,255,0.15)",
+            }} />
+            <span style={{
+              fontSize: 11, fontWeight: 500, letterSpacing: "0.06em",
+              color: "rgba(232,184,75,0.7)", textTransform: "uppercase",
+            }}>
+              Brand Kit
+            </span>
+          </div>
+
+          {/* Trust stat */}
+          <span style={{
+            fontSize: 11, fontWeight: 500,
+            color: "rgba(250,243,228,0.35)",
+            letterSpacing: "0.02em",
+          }}>
+            500+ identidades creadas
           </span>
-          <span style={S.pill}>Brand Kit</span>
         </div>
-      </header>
+      </nav>
 
-      {/* ═══════════════════════════════════════
-          HERO — dark immersive studio
-      ═══════════════════════════════════════ */}
-      <section style={S.hero}>
+      {/* ═══ HERO — editorial 2-col ═══ */}
+      <section style={{
+        position: "relative",
+        background: "var(--bg-hero)",
+        paddingTop: 120, paddingBottom: 96,
+        overflow: "hidden",
+      }}>
 
-        {/* Ambient glows */}
+        {/* Single focused glow — LEFT side, not centered */}
         <div aria-hidden="true" style={{
-          position: "absolute", inset: 0, pointerEvents: "none",
-          background: `
-            radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(196,138,32,0.22) 0%, transparent 65%),
-            radial-gradient(ellipse 50% 35% at 15% 80%,  rgba(155,110,47,0.10) 0%, transparent 60%),
-            radial-gradient(ellipse 40% 30% at 88% 70%,  rgba(232,184,75,0.07) 0%, transparent 55%)
-          `,
+          position: "absolute", top: "-20%", left: "-8%",
+          width: "55vw", height: "80vh",
+          background: "radial-gradient(ellipse at center, rgba(180,120,28,0.16) 0%, transparent 68%)",
+          pointerEvents: "none",
         }} />
 
         {/* Grain */}
         <div aria-hidden="true" style={{
-          position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.028,
+          position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.025,
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           backgroundSize: "180px",
         }} />
 
-        {/* Horizontal shimmer line */}
-        <div aria-hidden="true" style={{
-          position: "absolute", top: "42%", left: "50%", transform: "translateX(-50%)",
-          width: "min(560px, 90vw)", height: 1,
-          background: "linear-gradient(90deg, transparent 0%, rgba(232,184,75,0.25) 30%, rgba(232,184,75,0.5) 50%, rgba(232,184,75,0.25) 70%, transparent 100%)",
-          pointerEvents: "none",
-        }} />
+        {/* ── 2-column editorial grid ── */}
+        <div className="hero-grid">
 
-        {/* Content */}
-        <div style={{
-          position: "relative", zIndex: 1,
-          width: "100%", maxWidth: "var(--max-w)",
-          padding: "0 var(--px)", textAlign: "center",
-        }}>
+          {/* LEFT — editorial headline */}
+          <div>
 
-          {/* Badge */}
-          <div className="fade-up" style={{ marginBottom: 28 }}>
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
-              textTransform: "uppercase", color: "var(--gold-300)",
-              border: "1px solid rgba(232,184,75,0.3)",
-              borderRadius: 999, padding: "5px 14px",
-              background: "rgba(232,184,75,0.07)",
-            }}>
+            {/* Eyebrow — editorial label */}
+            <div className="fade-up" style={{ marginBottom: 28 }}>
               <span style={{
-                width: 5, height: 5, borderRadius: "50%",
-                background: "var(--gold-300)", flexShrink: 0,
+                fontSize: 10, fontWeight: 700, letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "rgba(232,184,75,0.55)",
+              }}>
+                Identidad visual · ByOlisJo
+              </span>
+              {/* Thin accent rule */}
+              <div style={{
+                marginTop: 10, height: 1, width: 40,
+                background: "linear-gradient(90deg, rgba(232,184,75,0.6), transparent)",
               }} />
-              Generador de identidad de marca
-            </span>
+            </div>
+
+            {/* H1 — split typographic treatment */}
+            <h1 className="fade-up d1" style={{
+              fontSize: "clamp(2.75rem, 5.5vw, 4.5rem)",
+              fontWeight: 800,
+              lineHeight: 1.06,
+              letterSpacing: "-0.04em",
+              color: "#FAF3E4",
+              marginBottom: 28,
+            }}>
+              Tu marca{" "}
+              <br />
+              no debería{" "}
+              <br />
+              <em style={{
+                fontStyle: "italic",
+                background: "linear-gradient(135deg, #F5D080 0%, var(--gold-300) 45%, var(--gold-500) 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>
+                parecer prestada.
+              </em>
+            </h1>
+
+            {/* Manifesto line */}
+            <div className="fade-up d2" style={{
+              display: "flex", alignItems: "flex-start", gap: 12,
+            }}>
+              <div style={{
+                width: 2, flexShrink: 0, alignSelf: "stretch",
+                background: "linear-gradient(180deg, rgba(232,184,75,0.5), transparent)",
+                borderRadius: 1, minHeight: 36,
+              }} />
+              <p style={{
+                fontSize: 14, lineHeight: 1.7,
+                color: "rgba(250,243,228,0.45)",
+                letterSpacing: "-0.005em",
+                fontStyle: "italic",
+              }}>
+                "Construimos identidades con propósito,<br />
+                no plantillas con color."
+              </p>
+            </div>
+
           </div>
 
-          {/* Title */}
-          <h1 className="fade-up fade-up-d1" style={{
-            fontSize: "clamp(2.5rem, 6.5vw, 4.75rem)",
-            fontWeight: 800, lineHeight: 1.06,
-            letterSpacing: "-0.04em",
-            color: "#FAF3E4",
-            marginBottom: 20,
-          }}>
-            Tu identidad de marca,{" "}
-            <br />
-            <span style={{
-              background: "linear-gradient(135deg, #F5D080 0%, var(--gold-300) 40%, var(--gold-500) 75%, #A67828 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+          {/* RIGHT — form */}
+          <div className="fade-up d3">
+
+            {/* Form label — ByOlisJo voice */}
+            <p style={{
+              fontSize: 13, fontWeight: 600,
+              color: "rgba(250,243,228,0.6)",
+              marginBottom: 14, lineHeight: 1.5,
+              letterSpacing: "-0.01em",
             }}>
-              en segundos.
-            </span>
-          </h1>
+              ¿Cómo describirías tu marca<br />si la presentaras en persona?
+            </p>
 
-          {/* Subtitle */}
-          <p className="fade-up fade-up-d2" style={{
-            fontSize: "clamp(15px, 2vw, 17px)",
-            color: "rgba(250,243,228,0.58)",
-            lineHeight: 1.75, maxWidth: 460,
-            margin: "0 auto 44px",
-            letterSpacing: "-0.01em",
-          }}>
-            Describe tu marca y genera paleta, tipografías, voz, slogan y posts de arranque listos para usar.
-          </p>
-
-          {/* ── Form box on dark ── */}
-          <div className="fade-up fade-up-d3" style={{
-            maxWidth: 580, margin: "0 auto",
-          }}>
             {/* Input */}
-            <div style={{
-              position: "relative",
-              marginBottom: 12,
-            }}>
-              <input
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && fetchKits(1, "replace")}
-                onFocus={() => setInputFocused(true)}
-                onBlur={() => setInputFocused(false)}
-                placeholder="Describe tu marca: estilo, colores, sensación…"
-                style={{
-                  width: "100%",
-                  padding: "18px 22px",
-                  borderRadius: 14,
-                  border: inputFocused
-                    ? "1px solid rgba(232,184,75,0.65)"
-                    : "1px solid rgba(255,255,255,0.1)",
-                  background: inputFocused
-                    ? "rgba(255,255,255,0.07)"
-                    : "rgba(255,255,255,0.05)",
-                  fontSize: 15,
-                  color: "#FAF3E4",
-                  outline: "none",
-                  fontFamily: "var(--font-sans)",
-                  letterSpacing: "-0.01em",
-                  transition: "border-color 0.2s, background 0.2s, box-shadow 0.2s",
-                  boxShadow: inputFocused
-                    ? "0 0 0 3px rgba(232,184,75,0.12), inset 0 1px 0 rgba(255,255,255,0.05)"
-                    : "inset 0 1px 0 rgba(255,255,255,0.04)",
-                }}
-              />
-            </div>
+            <textarea
+              rows={3}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder={'Directa. Femenina. Dorada.\nQue vende con autoridad.'}
+              style={{
+                width: "100%",
+                padding: "16px 18px",
+                borderRadius: 12,
+                border: focused
+                  ? "1px solid rgba(232,184,75,0.6)"
+                  : "1px solid rgba(255,255,255,0.09)",
+                background: focused
+                  ? "rgba(255,255,255,0.07)"
+                  : "rgba(255,255,255,0.04)",
+                fontSize: 14,
+                color: "#FAF3E4",
+                outline: "none",
+                fontFamily: "var(--font-sans)",
+                lineHeight: 1.65,
+                letterSpacing: "-0.01em",
+                resize: "none",
+                transition: "border-color 0.2s, background 0.2s, box-shadow 0.2s",
+                boxShadow: focused
+                  ? "0 0 0 3px rgba(232,184,75,0.1)"
+                  : "none",
+              }}
+            />
 
             {/* Primary CTA */}
             <button
               onClick={() => fetchKits(1, "replace")}
-              disabled={!canSubmit}
+              disabled={!can}
               style={{
                 width: "100%",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                padding: "17px 32px",
-                borderRadius: 14,
+                marginTop: 10,
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "16px 22px",
+                borderRadius: 12,
                 border: "none",
-                background: canSubmit
-                  ? "linear-gradient(135deg, #F0C14A 0%, #D4972C 40%, #A16E22 100%)"
-                  : "rgba(255,255,255,0.08)",
-                color: canSubmit ? "#1A0E00" : "rgba(255,255,255,0.25)",
-                fontSize: 15, fontWeight: 700, letterSpacing: "0.01em",
-                cursor: canSubmit ? "pointer" : "not-allowed",
-                boxShadow: canSubmit ? "var(--shadow-glow)" : "none",
-                transition: "background 0.2s, box-shadow 0.2s, transform 0.12s, opacity 0.2s",
+                background: can
+                  ? "linear-gradient(135deg, #EFC143 0%, #C98A1A 50%, #9B6E2F 100%)"
+                  : "rgba(255,255,255,0.06)",
+                color: can ? "#1A0E00" : "rgba(255,255,255,0.2)",
+                fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em",
+                cursor: can ? "pointer" : "not-allowed",
+                boxShadow: can
+                  ? "0 0 0 1px rgba(196,138,32,0.3), 0 6px 24px rgba(155,110,47,0.38)"
+                  : "none",
+                transition: "background 0.2s, box-shadow 0.2s, transform 0.12s",
                 fontFamily: "var(--font-sans)",
               }}
               onMouseEnter={(e) => {
-                if (canSubmit) {
-                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 0 1px rgba(196,138,32,0.5), 0 12px 40px rgba(155,110,47,0.6)";
+                if (can) {
+                  const b = e.currentTarget as HTMLButtonElement;
+                  b.style.transform = "translateY(-1px)";
+                  b.style.boxShadow = "0 0 0 1px rgba(196,138,32,0.45), 0 10px 32px rgba(155,110,47,0.55)";
                 }
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = canSubmit ? "var(--shadow-glow)" : "none";
+                const b = e.currentTarget as HTMLButtonElement;
+                b.style.transform = "";
+                b.style.boxShadow = can
+                  ? "0 0 0 1px rgba(196,138,32,0.3), 0 6px 24px rgba(155,110,47,0.38)"
+                  : "none";
               }}
-              title="Genera 1 propuesta a partir de tu descripción"
             >
               {loading ? (
-                <>
+                <span style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 auto" }}>
                   <span style={{
-                    width: 16, height: 16,
-                    border: "2px solid rgba(26,14,0,0.25)",
-                    borderTopColor: "#1A0E00",
-                    borderRadius: "50%",
-                    display: "inline-block",
-                    animation: "spin 0.7s linear infinite",
+                    width: 15, height: 15,
+                    border: "2px solid rgba(26,14,0,0.2)",
+                    borderTopColor: "#1A0E00", borderRadius: "50%",
+                    display: "inline-block", animation: "spin 0.7s linear infinite",
                   }} />
-                  Generando tu kit…
-                </>
+                  Construyendo tu identidad…
+                </span>
               ) : (
                 <>
-                  Generar kit de marca
+                  <span>Crear mi identidad visual</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
                   </svg>
@@ -311,32 +305,37 @@ export default function Home() {
 
             {/* Secondary row */}
             <div style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
-              marginTop: 14, flexWrap: "wrap",
+              marginTop: 12,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              flexWrap: "wrap", gap: 8,
             }}>
               <button
                 onClick={() => fetchKits(3, "append")}
-                disabled={!canSubmit}
+                disabled={!can}
                 style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
                   background: "transparent",
-                  color: canSubmit ? "rgba(232,184,75,0.8)" : "rgba(255,255,255,0.2)",
-                  border: `1px solid ${canSubmit ? "rgba(232,184,75,0.3)" : "rgba(255,255,255,0.08)"}`,
-                  borderRadius: 10, padding: "10px 18px",
-                  fontSize: 13, fontWeight: 600,
-                  cursor: canSubmit ? "pointer" : "not-allowed",
-                  transition: "background 0.18s, border-color 0.18s",
+                  border: "none",
+                  padding: "6px 0",
+                  fontSize: 12, fontWeight: 600,
+                  color: can ? "rgba(232,184,75,0.6)" : "rgba(255,255,255,0.18)",
+                  cursor: can ? "pointer" : "not-allowed",
                   fontFamily: "var(--font-sans)",
+                  letterSpacing: "0.01em",
+                  transition: "color 0.18s",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                  textDecorationColor: "rgba(232,184,75,0.25)",
                 }}
                 onMouseEnter={(e) => {
-                  if (canSubmit) (e.currentTarget as HTMLButtonElement).style.background = "rgba(232,184,75,0.08)";
+                  if (can) (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,184,75,0.9)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                  (e.currentTarget as HTMLButtonElement).style.color = can
+                    ? "rgba(232,184,75,0.6)"
+                    : "rgba(255,255,255,0.18)";
                 }}
-                title="Añade 3 variaciones nuevas"
               >
-                + Agregar 3 variaciones más
+                + Agregar 3 variaciones
               </button>
 
               {items.length > 0 && (
@@ -345,82 +344,75 @@ export default function Home() {
                   disabled={loading}
                   style={{
                     background: "transparent", border: "none",
-                    fontSize: 12, color: "rgba(255,255,255,0.28)",
-                    cursor: "pointer", padding: "10px 8px",
+                    fontSize: 11, color: "rgba(255,255,255,0.22)",
+                    cursor: "pointer", padding: "6px 0",
                     fontFamily: "var(--font-sans)",
+                    letterSpacing: "0.02em",
                     transition: "color 0.18s",
                   }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.28)")}
-                  title="Limpia la lista de resultados"
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.45)")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.22)")}
                 >
                   Limpiar todo
                 </button>
               )}
             </div>
 
-            {/* Micro trust */}
-            <p style={{
-              marginTop: 20, fontSize: 11,
-              color: "rgba(250,243,228,0.28)",
-              letterSpacing: "0.04em",
-            }}>
-              Sin registro · Sin tarjeta · Resultado en segundos
-            </p>
-
-            {/* Error */}
             {err && (
               <div style={{
-                marginTop: 14, padding: "11px 16px",
-                background: "rgba(180,50,50,0.12)",
-                border: "1px solid rgba(180,50,50,0.25)",
-                borderRadius: 10, color: "#F87171", fontSize: 13,
-                textAlign: "left",
+                marginTop: 12, padding: "10px 14px",
+                background: "rgba(180,50,50,0.1)",
+                border: "1px solid rgba(180,50,50,0.2)",
+                borderRadius: 8, color: "#F87171", fontSize: 12,
               }}>
                 {err}
               </div>
             )}
+
+            {/* Micro trust */}
+            <p style={{
+              marginTop: 18, fontSize: 10,
+              color: "rgba(250,243,228,0.22)",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}>
+              Sin registro · Sin tarjeta · Resultado en segundos
+            </p>
+
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          RESULTS — light surface
-      ═══════════════════════════════════════ */}
+      {/* ═══ RESULTS ═══ */}
       {items.length > 0 && (
-        <section
-          id="results"
-          style={{
-            background: "var(--bg-base)",
-            borderTop: "1px solid rgba(155,110,47,0.15)",
-          }}
-        >
-          <div style={S.body}>
-            <div style={{
-              marginBottom: 32, display: "flex",
-              alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12,
-            }}>
-              <div>
-                <p style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
-                  textTransform: "uppercase", color: "var(--gold-700)", marginBottom: 4,
-                }}>
-                  Resultados generados
-                </p>
-                <h2 style={{
-                  fontSize: 22, fontWeight: 700,
-                  letterSpacing: "-0.025em", color: "var(--text-primary)",
-                }}>
-                  {items.length} propuesta{items.length !== 1 ? "s" : ""} de marca
-                </h2>
-              </div>
+        <section id="results" style={{
+          background: "var(--bg-base)",
+          borderTop: "1px solid rgba(155,110,47,0.12)",
+        }}>
+          <div className="results-body">
+
+            {/* Results header */}
+            <div style={{ marginBottom: 36 }}>
+              <p style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: "0.15em",
+                textTransform: "uppercase", color: "var(--gold-700)", marginBottom: 6,
+              }}>
+                Identidades generadas
+              </p>
+              <h2 style={{
+                fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em",
+                color: "var(--text-primary)",
+              }}>
+                {items.length} propuesta{items.length !== 1 ? "s" : ""} para tu marca
+              </h2>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               {items.map((data, i) => (
                 <KitCard key={i} data={data} index={i} />
               ))}
             </div>
+
           </div>
         </section>
       )}
@@ -433,72 +425,69 @@ export default function Home() {
    KIT CARD
 ───────────────────────────────────────── */
 function KitCard({ data, index }: { data: Proposal; index: number }) {
+  const kit = String(index + 1).padStart(2, "0");
+
   return (
     <article style={{
       background: "var(--bg-surface)",
-      border: "1px solid rgba(155,110,47,0.14)",
+      border: "1px solid rgba(155,110,47,0.13)",
       borderRadius: 20,
       overflow: "hidden",
       boxShadow: "var(--shadow-lg)",
     }}>
 
-      {/* Card header */}
+      {/* Card header — editorial */}
       <div style={{
-        padding: "22px 28px 18px",
-        background: "linear-gradient(135deg, #FAF6F0 0%, #F3EBE0 100%)",
+        padding: "22px 28px 20px",
+        background: "linear-gradient(135deg, #FAF6F0 0%, #F0E8DC 100%)",
         borderBottom: "1px solid rgba(155,110,47,0.1)",
-        display: "flex", alignItems: "flex-start",
-        justifyContent: "space-between", flexWrap: "wrap", gap: 8,
-        position: "relative", overflow: "hidden",
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", flexWrap: "wrap", gap: 12,
       }}>
-        {/* Decorative corner glow */}
-        <div aria-hidden="true" style={{
-          position: "absolute", top: -30, right: -30,
-          width: 120, height: 120, borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(196,138,32,0.12) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "relative" }}>
+        <div>
           <div style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
-            textTransform: "uppercase", color: "var(--gold-700)", marginBottom: 5,
-            display: "flex", alignItems: "center", gap: 6,
+            fontSize: 10, fontWeight: 700, letterSpacing: "0.14em",
+            textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 5,
           }}>
-            <span style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 18, height: 18, borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--gold-300), var(--gold-700))",
-              fontSize: 9, fontWeight: 800, color: "#1A0E00",
-            }}>
-              {index + 1}
-            </span>
-            Propuesta{data.style ? ` · ${data.style}` : ""}
+            Kit N°{kit}{data.style ? ` · ${data.style}` : ""}
           </div>
           <h2 style={{
-            fontSize: 22, fontWeight: 700, letterSpacing: "-0.025em",
+            fontSize: 21, fontWeight: 700, letterSpacing: "-0.025em",
             color: "var(--text-primary)", lineHeight: 1.2,
           }}>
             {data.palette.name}
           </h2>
         </div>
+
+        {/* Palette preview strip */}
+        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+          {data.palette.colors.slice(0, 5).map((c) => (
+            <div key={c} style={{
+              width: 20, height: 20, borderRadius: 5,
+              background: c,
+              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+            }} title={c} />
+          ))}
+        </div>
       </div>
 
       <div style={{ padding: "28px 28px", display: "flex", flexDirection: "column", gap: 28 }}>
 
-        {/* ── Palette ── */}
+        {/* Palette — full */}
         <div>
-          <Label>Paleta de color</Label>
+          <Label>Paleta</Label>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 12 }}>
             {data.palette.colors.map((c) => (
-              <div key={c} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
+              <div key={c} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                 <div style={{
-                  width: 60, height: 60, borderRadius: 14,
+                  width: 56, height: 56, borderRadius: 12,
                   background: c,
-                  border: "1px solid rgba(0,0,0,0.09)",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)",
-                }} title={c} />
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+                }} />
                 <span style={{
-                  fontSize: 10, fontWeight: 600, letterSpacing: "0.05em",
+                  fontSize: 9, fontWeight: 600, letterSpacing: "0.05em",
                   color: "var(--text-muted)", fontFamily: "ui-monospace, monospace",
                 }}>
                   {c.toUpperCase()}
@@ -508,82 +497,79 @@ function KitCard({ data, index }: { data: Proposal; index: number }) {
           </div>
         </div>
 
-        <Divider />
+        <Sep />
 
-        {/* ── Typography ── */}
+        {/* Typography */}
         <div>
           <Label>Tipografías</Label>
           <div style={{
+            marginTop: 12,
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: 12, marginTop: 12,
+            gap: 10,
           }}>
-            <TypeCard label="Heading" value={data.font.heading} large />
-            <TypeCard label="Body" value={data.font.body} large={false} />
+            <TypeCard label="Heading" value={data.font.heading} size={20} weight={700} />
+            <TypeCard label="Body" value={data.font.body} size={15} weight={400} />
           </div>
         </div>
 
-        <Divider />
+        <Sep />
 
-        {/* ── Slogan ── */}
+        {/* Slogan — pull quote */}
         <div>
           <Label>Slogan</Label>
           <div style={{
             marginTop: 12,
-            padding: "18px 22px",
-            background: "linear-gradient(135deg, rgba(196,138,32,0.07) 0%, rgba(155,110,47,0.04) 100%)",
-            border: "1px solid rgba(196,138,32,0.2)",
+            padding: "20px 24px",
+            background: "linear-gradient(135deg, rgba(196,138,32,0.06), rgba(155,110,47,0.03))",
+            border: "1px solid rgba(196,138,32,0.18)",
             borderLeft: "4px solid var(--gold-500)",
             borderRadius: "0 12px 12px 0",
           }}>
             <p style={{
-              fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em",
-              color: "var(--text-primary)", lineHeight: 1.45, fontStyle: "italic",
+              fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em",
+              color: "var(--text-primary)", lineHeight: 1.4, fontStyle: "italic",
             }}>
               "{data.slogan}"
             </p>
           </div>
         </div>
 
-        <Divider />
+        <Sep />
 
-        {/* ── Voice ── */}
+        {/* Voice */}
         <div>
           <Label>Voz de marca</Label>
           <p style={{
-            marginTop: 10, fontSize: 15, lineHeight: 1.8,
+            marginTop: 10, fontSize: 14, lineHeight: 1.8,
             color: "var(--text-secondary)", letterSpacing: "-0.005em",
           }}>
             {data.voice}
           </p>
         </div>
 
-        <Divider />
+        <Sep />
 
-        {/* ── Posts ── */}
+        {/* Posts */}
         <div>
-          <Label>3 posts de arranque</Label>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+          <Label>Posts de arranque</Label>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
             {data.posts.map((p, idx) => (
               <div key={idx} style={{
-                display: "grid", gridTemplateColumns: "36px 1fr", gap: 14,
+                display: "grid", gridTemplateColumns: "28px 1fr", gap: 12,
                 background: "var(--bg-muted)",
-                border: "1px solid rgba(155,110,47,0.12)",
-                borderRadius: 12, padding: "14px 16px",
+                border: "1px solid rgba(155,110,47,0.1)",
+                borderRadius: 10, padding: "12px 14px",
               }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                  background: "linear-gradient(135deg, var(--gold-300) 0%, var(--gold-700) 100%)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 13, fontWeight: 800, color: "#1A0E00",
+                <span style={{
+                  fontSize: 11, fontWeight: 800, color: "var(--gold-700)",
+                  letterSpacing: "0.04em", alignSelf: "flex-start", paddingTop: 1,
+                  fontFamily: "ui-monospace, monospace",
                 }}>
-                  {idx + 1}
-                </div>
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
                 <div>
-                  <div style={{
-                    fontSize: 13, fontWeight: 700, color: "var(--text-primary)",
-                    marginBottom: 3, letterSpacing: "-0.01em",
-                  }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 2 }}>
                     {p.title}
                   </div>
                   <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65 }}>
@@ -595,46 +581,45 @@ function KitCard({ data, index }: { data: Proposal; index: number }) {
           </div>
         </div>
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         <div style={{
           display: "flex", flexWrap: "wrap",
-          alignItems: "center", justifyContent: "space-between",
-          gap: 14, paddingTop: 4,
+          alignItems: "center", justifyContent: "space-between", gap: 14,
         }}>
           <a
             href={data.canvaSearch}
             target="_blank"
             rel="noreferrer"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 9,
-              background: "linear-gradient(135deg, #F0C14A 0%, #D4972C 45%, #A16E22 100%)",
-              color: "#1A0E00", border: "none",
-              borderRadius: 10, padding: "12px 22px",
-              fontSize: 13, fontWeight: 700, letterSpacing: "0.01em",
-              boxShadow: "0 1px 3px rgba(155,110,47,0.3), 0 4px 16px rgba(155,110,47,0.25)",
-              transition: "opacity 0.18s, transform 0.12s, box-shadow 0.18s",
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "linear-gradient(135deg, #EFC143 0%, #C98A1A 50%, #9B6E2F 100%)",
+              color: "#1A0E00",
+              borderRadius: 10, padding: "11px 20px",
+              fontSize: 13, fontWeight: 700,
+              boxShadow: "0 1px 3px rgba(155,110,47,0.25), 0 4px 14px rgba(155,110,47,0.2)",
+              transition: "transform 0.14s, box-shadow 0.14s",
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLAnchorElement;
-              el.style.transform = "translateY(-2px)";
-              el.style.boxShadow = "0 1px 3px rgba(155,110,47,0.4), 0 8px 24px rgba(155,110,47,0.4)";
+              el.style.transform = "translateY(-1px)";
+              el.style.boxShadow = "0 2px 6px rgba(155,110,47,0.35), 0 8px 22px rgba(155,110,47,0.35)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLAnchorElement;
               el.style.transform = "";
-              el.style.boxShadow = "0 1px 3px rgba(155,110,47,0.3), 0 4px 16px rgba(155,110,47,0.25)";
+              el.style.boxShadow = "0 1px 3px rgba(155,110,47,0.25), 0 4px 14px rgba(155,110,47,0.2)";
             }}
           >
             Explorar en Canva
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M7 17L17 7M7 7h10v10"/>
             </svg>
           </a>
 
           {data.tip && (
             <p style={{
-              fontSize: 12, color: "var(--text-muted)", maxWidth: 340,
-              lineHeight: 1.6, fontStyle: "italic",
+              fontSize: 11, color: "var(--text-muted)",
+              maxWidth: 340, lineHeight: 1.6, fontStyle: "italic",
             }}>
               {data.tip}
             </p>
@@ -646,11 +631,11 @@ function KitCard({ data, index }: { data: Proposal; index: number }) {
   );
 }
 
-/* ─── Shared sub-components ─── */
+/* ─── Sub-components ─── */
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
+      fontSize: 9, fontWeight: 800, letterSpacing: "0.16em",
       textTransform: "uppercase", color: "var(--gold-700)",
     }}>
       {children}
@@ -658,30 +643,27 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Divider() {
-  return <div style={{ height: 1, background: "rgba(155,110,47,0.1)" }} />;
+function Sep() {
+  return <div style={{ height: 1, background: "rgba(155,110,47,0.09)" }} />;
 }
 
-function TypeCard({ label, value, large }: { label: string; value: string; large: boolean }) {
+function TypeCard({ label, value, size, weight }: {
+  label: string; value: string; size: number; weight: number;
+}) {
   return (
     <div style={{
-      background: "var(--bg-muted)",
-      borderRadius: 12,
-      padding: "14px 16px",
+      background: "var(--bg-muted)", borderRadius: 10, padding: "14px 16px",
       border: "1px solid rgba(155,110,47,0.1)",
     }}>
       <div style={{
-        fontSize: 10, fontWeight: 700, color: "var(--text-muted)",
-        textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6,
+        fontSize: 9, fontWeight: 800, color: "var(--text-muted)",
+        textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 7,
       }}>
         {label}
       </div>
       <div style={{
-        fontSize: large ? 20 : 16,
-        fontWeight: large ? 700 : 400,
-        color: "var(--text-primary)",
-        letterSpacing: large ? "-0.02em" : "-0.01em",
-        lineHeight: 1.3,
+        fontSize: size, fontWeight: weight, color: "var(--text-primary)",
+        letterSpacing: "-0.015em", lineHeight: 1.25,
       }}>
         {value}
       </div>
