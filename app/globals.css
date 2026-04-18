@@ -78,8 +78,23 @@ img { display: block; max-width: 100%; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes ctaGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(196,138,32,0.32), 0 6px 24px rgba(155,110,47,0.38); }
+  50%       { box-shadow: 0 0 0 1px rgba(196,138,32,0.55), 0 12px 36px rgba(155,110,47,0.58); }
+}
+
 .fade-up    { animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both; }
 .d1         { animation-delay: 0.06s; }
 .d2         { animation-delay: 0.14s; }
 .d3         { animation-delay: 0.24s; }
 .d4         { animation-delay: 0.36s; }
+
+/* ── CTA micro-interactions ── */
+.cta-btn  { position: relative; }
+.cta-glow { animation: ctaGlow 3.5s ease-in-out infinite; }
+
+.cta-arrow {
+  display: inline-flex;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cta-btn:hover .cta-arrow { transform: translateX(5px); }

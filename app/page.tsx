@@ -203,12 +203,23 @@ export default function Home() {
           {/* RIGHT — form */}
           <div className="fade-up d3">
 
-            {/* Form label — ByOlisJo voice */}
+            {/* Form container — amber top-border signature */}
+            <div style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(232,184,75,0.13)",
+              borderTop: "2px solid rgba(232,184,75,0.5)",
+              borderRadius: 14,
+              padding: "22px 20px 20px",
+              marginBottom: 12,
+            }}>
+
+            {/* Form label — ByOlisJo voice, reacts to focus */}
             <p style={{
               fontSize: 13, fontWeight: 600,
-              color: "rgba(250,243,228,0.6)",
+              color: focused ? "rgba(232,184,75,0.85)" : "rgba(250,243,228,0.55)",
               marginBottom: 14, lineHeight: 1.5,
               letterSpacing: "-0.01em",
+              transition: "color 0.22s",
             }}>
               ¿Cómo describirías tu marca<br />si la presentaras en persona?
             </p>
@@ -249,11 +260,12 @@ export default function Home() {
             <button
               onClick={() => fetchKits(1, "replace")}
               disabled={!can}
+              className={can ? "cta-btn cta-glow" : "cta-btn"}
               style={{
                 width: "100%",
                 marginTop: 10,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "16px 22px",
+                padding: "18px 24px",
                 borderRadius: 12,
                 border: "none",
                 background: can
@@ -262,25 +274,15 @@ export default function Home() {
                 color: can ? "#1A0E00" : "rgba(255,255,255,0.2)",
                 fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em",
                 cursor: can ? "pointer" : "not-allowed",
-                boxShadow: can
-                  ? "0 0 0 1px rgba(196,138,32,0.3), 0 6px 24px rgba(155,110,47,0.38)"
-                  : "none",
-                transition: "background 0.2s, box-shadow 0.2s, transform 0.12s",
+                boxShadow: can ? undefined : "none",
+                transition: "background 0.2s, transform 0.14s",
                 fontFamily: "var(--font-sans)",
               }}
               onMouseEnter={(e) => {
-                if (can) {
-                  const b = e.currentTarget as HTMLButtonElement;
-                  b.style.transform = "translateY(-1px)";
-                  b.style.boxShadow = "0 0 0 1px rgba(196,138,32,0.45), 0 10px 32px rgba(155,110,47,0.55)";
-                }
+                if (can) (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
-                const b = e.currentTarget as HTMLButtonElement;
-                b.style.transform = "";
-                b.style.boxShadow = can
-                  ? "0 0 0 1px rgba(196,138,32,0.3), 0 6px 24px rgba(155,110,47,0.38)"
-                  : "none";
+                (e.currentTarget as HTMLButtonElement).style.transform = "";
               }}
             >
               {loading ? (
@@ -296,12 +298,15 @@ export default function Home() {
               ) : (
                 <>
                   <span>Crear mi identidad visual</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg className="cta-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
                   </svg>
                 </>
               )}
             </button>
+
+            {/* close form container */}
+            </div>
 
             {/* Secondary row */}
             <div style={{
